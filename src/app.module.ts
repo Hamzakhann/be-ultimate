@@ -1,22 +1,28 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './modules/users/entities/user.entity';
 import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module'; // Import the Module, not Service
 
 @Module({
   imports: [
-    // Database Configuration
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'admin',
-      password: 'password123',
-      database: 'fintech_platform',
-      entities: [User],
-      synchronize: true, // Note: Set to false in production; use migrations instead!
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('DB_HOST'),
+        port: config.get<number>('DB_PORT'),
+        username: config.get<string>('DB_USERNAME'),
+        password: config.get<string>('DB_PASSWORD'),
+        database: config.get<string>('DB_NAME'),
+        autoLoadEntities: true,
+        synchronize: true, // Only for Dev
+      }),
     }),
     UsersModule,
+    AuthModule, // Ensure ONLY AuthModule is here
   ],
 })
-export class AppModule { }
+export class AppModule {}

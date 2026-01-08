@@ -2,22 +2,22 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateCol
 
 @Entity('users')
 export class User {
-    @PrimaryGeneratedColumn('uuid') // UUID is better for distributed systems than Incremental IDs
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-    @Index({ unique: true }) // Fast lookup for logins
-    @Column({ unique: true })
-    email: string;
+  @Index({ unique: true })
+  @Column({ unique: true })
+  email!: string;
 
-    @Column({ select: false }) // Security: Never return the password in queries by default
-    password: string;
+  @Column({ select: false })
+  password!: string;
 
-    @Column({ default: true })
-    isActive: boolean;
+  @Column({ default: true })
+  isActive!: boolean;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt!: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }
