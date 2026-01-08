@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module'; // Import the Module, not Service
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -12,17 +12,29 @@ import { AuthModule } from './modules/auth/auth.module'; // Import the Module, n
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST'),
-        port: config.get<number>('DB_PORT'),
-        username: config.get<string>('DB_USERNAME'),
-        password: config.get<string>('DB_PASSWORD'),
-        database: config.get<string>('DB_NAME'),
+        replication: {
+          master: {
+            host: config.get<string>('DB_HOST'),
+            port: config.get<number>('DB_PORT'),
+            username: config.get<string>('DB_USERNAME'),
+            password: config.get<string>('DB_PASSWORD'),
+            database: config.get<string>('DB_NAME'),
+          },
+          slaves: [{
+            host: config.get<string>('DB_REPLICA_HOST'),
+            port: config.get<number>('DB_REPLICA_PORT'),
+            username: config.get<string>('DB_USERNAME'),
+            password: config.get<string>('DB_PASSWORD'),
+            database: config.get<string>('DB_NAME'),
+          }],
+        },
         autoLoadEntities: true,
-        synchronize: true, // Only for Dev
+        synchronize: true, // Only for development
+        logging: ['query', 'error'], // Great for seeing which DB is hit
       }),
     }),
     UsersModule,
-    AuthModule, // Ensure ONLY AuthModule is here
+    AuthModule,
   ],
 })
 export class AppModule {}
