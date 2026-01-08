@@ -25,4 +25,8 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @Column({ nullable: true })
+  name?: string;
+
 }

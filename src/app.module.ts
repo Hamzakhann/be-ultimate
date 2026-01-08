@@ -29,7 +29,7 @@ import { AuthModule } from './modules/auth/auth.module';
           }],
         },
         autoLoadEntities: true,
-        synchronize: true, // Only for development
+        synchronize: false, // Only for development
         logging: ['query', 'error'], // Great for seeing which DB is hit
       }),
     }),
