@@ -42,10 +42,15 @@ import { AuditModule } from './modules/audit/audit.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>('MONGO_URI'),
-        // These options are sometimes required for strict auth handshakes
-        authSource: 'admin',
-        user: 'admin',
-        pass: 'password123',
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        serverSelectionTimeoutMS: 10000,
+        family: 4, // Force IPv4
+        connectionFactory: (connection) => {
+          connection.on('connected', () => console.log('MongoDB Replica Set Connected'));
+          connection.on('disconnected', () => console.error('MongoDB Disconnected!'));
+          return connection;
+        },
       }),
     }),
     RedisCustomModule,

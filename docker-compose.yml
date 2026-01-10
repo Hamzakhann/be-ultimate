@@ -5,18 +5,35 @@ services:
     container_name: fintech_redis
     ports:
       - '6379:6379'
-  mongodb:
+  # Node 1
+  mongo1:
     image: mongo:6.0
-    container_name: fintech_mongo
-    restart: always
+    container_name: mongo1
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
     ports:
       - '27017:27017'
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password123
-      MONGO_INITDB_DATABASE: fintech_logs
     volumes:
-      - mongodb_data:/data/db
+      - mongo1_data:/data/db
+
+  # Node 2
+  mongo2:
+    image: mongo:6.0
+    container_name: mongo2
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongo2_data:/data/db
+
+  # Node 3
+  mongo3:
+    image: mongo:6.0
+    container_name: mongo3
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '27019:27017'
+    volumes:
+      - mongo3_data:/data/db
   postgres:
     image: postgres:15
     container_name: fintech_db
@@ -31,4 +48,6 @@ services:
 
 volumes:
   postgres_data:
-  mongodb_data:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
