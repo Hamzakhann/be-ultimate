@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Ip } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 
@@ -8,11 +8,13 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: CreateUserDto) {
-    // 1. Get the user (or throw Unauthorized)
+  async login(
+    @Body() loginDto: CreateUserDto,
+    @Ip() ip: string, // <--- Add this decorator to get the requester's IP
+  ) {
     const user = await this.authService.validateUser(loginDto.email, loginDto.password);
     
-    // 2. Pass that user object to login()
-    return this.authService.login(user);
+    // Now passing two arguments as required by the updated AuthService
+    return this.authService.login(user, ip);
   }
 }
