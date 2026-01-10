@@ -16,6 +16,6 @@ export class UsersController {
     @UseGuards(JwtAuthGuard)
     @Get('profile')
     getProfile(@Request() req) {
-        return req.user; // Returns the decoded JWT payload
+        return this.usersService.findByEmail(req.user.email); // Returns the decoded JWT payload
     }
 }

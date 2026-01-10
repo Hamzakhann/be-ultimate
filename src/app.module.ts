@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { RedisCustomModule } from './database/redis.module';
+import { CacheModule } from './common/cache/cache.module';
 
 @Module({
   imports: [
@@ -33,8 +35,10 @@ import { AuthModule } from './modules/auth/auth.module';
         logging: ['query', 'error'], // Great for seeing which DB is hit
       }),
     }),
+    RedisCustomModule,
+    CacheModule,
     UsersModule,
     AuthModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
