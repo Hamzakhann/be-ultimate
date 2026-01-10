@@ -1,17 +1,17 @@
-version: '3.8'
+version: "3.8"
 services:
   redis:
     image: redis:7-alpine
     container_name: fintech_redis
     ports:
-      - '6379:6379'
+      - "6379:6379"
   # Node 1
   mongo1:
     image: mongo:6.0
     container_name: mongo1
-    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
-      - '27017:27017'
+      - "27017:27017"
     volumes:
       - mongo1_data:/data/db
 
@@ -19,9 +19,9 @@ services:
   mongo2:
     image: mongo:6.0
     container_name: mongo2
-    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
     ports:
-      - '27018:27017'
+      - "27018:27018"
     volumes:
       - mongo2_data:/data/db
 
@@ -29,16 +29,16 @@ services:
   mongo3:
     image: mongo:6.0
     container_name: mongo3
-    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
     ports:
-      - '27019:27017'
+      - "27019:27019"
     volumes:
       - mongo3_data:/data/db
   postgres:
     image: postgres:15
     container_name: fintech_db
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123

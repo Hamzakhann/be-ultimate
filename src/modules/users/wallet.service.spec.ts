@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WalletService } from './wallet.service';
 import { DataSource } from 'typeorm';
+import { AuditService } from '../audit/audit.service';
 
 describe('WalletService', () => {
     let service: WalletService;
@@ -23,11 +24,16 @@ describe('WalletService', () => {
         getRepository: jest.fn(),
     };
 
+    const mockAuditService = {
+        log: jest.fn(),
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 WalletService,
                 { provide: DataSource, useValue: mockDataSource },
+                { provide: AuditService, useValue: mockAuditService },
             ],
         }).compile();
 
@@ -39,7 +45,7 @@ describe('WalletService', () => {
     });
 
     it('should throw error if transfer amount is negative', async () => {
-        await expect(service.transferFunds('u1', 'u2', -100))
+        await expect(service.transferFunds('u1', 'u2', -100, '127.0.0.1'))
             .rejects.toThrow('Amount must be positive');
     });
 });

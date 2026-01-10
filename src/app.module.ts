@@ -47,6 +47,9 @@ import { AuditModule } from './modules/audit/audit.module';
         serverSelectionTimeoutMS: 10000,
         family: 4, // Force IPv4
         connectionFactory: (connection) => {
+          if (connection.readyState === 1) {
+            console.log('MongoDB Replica Set Connected');
+          }
           connection.on('connected', () => console.log('MongoDB Replica Set Connected'));
           connection.on('disconnected', () => console.error('MongoDB Disconnected!'));
           return connection;
