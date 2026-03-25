@@ -1,16 +1,25 @@
-import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, BadRequestException, InternalServerErrorException, Inject, OnModuleInit } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 import { DataSource } from 'typeorm';
 import { Wallet } from './entities/wallet.entity';
 import { AuditService } from '../audit/audit.service';
+import { TransactionEvent, TransactionStatus } from '../../common/interfaces/transaction-event.interface';
 
 @Injectable()
-export class WalletService {
+export class WalletService implements OnModuleInit {
   constructor(
     private readonly dataSource: DataSource,
     private readonly auditService: AuditService, // Inject the NoSQL Audit service
-  ) {}
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
+  ) { }
 
-async createWallet(userId: string): Promise<Wallet> {
+
+
+  async onModuleInit() {
+    await this.kafkaClient.connect();
+  }
+
+  async createWallet(userId: string): Promise<Wallet> {
     const walletRepository = this.dataSource.getRepository(Wallet);
     const wallet = walletRepository.create({ userId, balance: 0 });
     return await walletRepository.save(wallet);
@@ -50,19 +59,34 @@ async createWallet(userId: string): Promise<Wallet> {
       await queryRunner.manager.save(senderWallet);
       await queryRunner.manager.save(receiverWallet);
 
-      // LOG TO MONGO: This keeps Postgres clean of high-volume log data
-      await this.auditService.log(
-        fromUserId, 
-        'FUNDS_TRANSFER_INITIATED', 
-        { toUserId, amount }, 
-        ip
-      );
-
+      // 1. Commit SQL Transaction first (Money is safe)
       await queryRunner.commitTransaction();
+      // 2. Emit Success Event to Kafka
+      this.kafkaClient.emit('transaction.events', {
+        key: fromUserId, // Partitioning key
+        value: {
+          status: TransactionStatus.SUCCESS,
+          fromUserId,
+          toUserId,
+          amount,
+          metadata: { ip, timestamp: new Date().toISOString() },
+        } as TransactionEvent,
+      });
+      
       return { success: true, message: 'Transfer completed' };
     } catch (err) {
-      await this.auditService.log(fromUserId, 'FUNDS_TRANSFER_FAILED', { error: err.message }, ip);
       await queryRunner.rollbackTransaction();
+      // 3. Emit Failure Event to Kafka
+      this.kafkaClient.emit('transaction.events', {
+        key: fromUserId,
+        value: {
+          status: TransactionStatus.FAILED,
+          fromUserId,
+          toUserId,
+          amount,
+          metadata: { ip, error: err.message, timestamp: new Date().toISOString() },
+        } as TransactionEvent,
+      });
       throw new InternalServerErrorException(err.message || 'Transaction failed');
     } finally {
       await queryRunner.release();

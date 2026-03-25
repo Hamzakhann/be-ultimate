@@ -1,17 +1,17 @@
-version: "3.8"
+version: '3.8'
 services:
   redis:
     image: redis:7-alpine
     container_name: fintech_redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
   # Node 1
   mongo1:
     image: mongo:6.0
     container_name: mongo1
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
     ports:
-      - "27017:27017"
+      - '27017:27017'
     volumes:
       - mongo1_data:/data/db
 
@@ -19,9 +19,9 @@ services:
   mongo2:
     image: mongo:6.0
     container_name: mongo2
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '27018']
     ports:
-      - "27018:27018"
+      - '27018:27018'
     volumes:
       - mongo2_data:/data/db
 
@@ -29,25 +29,47 @@ services:
   mongo3:
     image: mongo:6.0
     container_name: mongo3
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '27019']
     ports:
-      - "27019:27019"
+      - '27019:27019'
     volumes:
       - mongo3_data:/data/db
   postgres:
     image: postgres:15
     container_name: fintech_db
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: fintech_platform
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: fintech_kafka
+    ports:
+      - '9092:9092'
+    environment:
+      # Use KRaft mode (No Zookeeper)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Create the topic automatically for development
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
 volumes:
   postgres_data:
   mongo1_data:
   mongo2_data:
   mongo3_data:
+  kafka_data:

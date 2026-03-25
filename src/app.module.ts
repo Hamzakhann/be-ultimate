@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RedisCustomModule } from './database/redis.module';
 import { CacheModule } from './common/cache/cache.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { KafkaCustomModule } from './database/kafka.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AuditModule } from './modules/audit/audit.module';
         },
       }),
     }),
+    KafkaCustomModule,
     RedisCustomModule,
     CacheModule,
     UsersModule,
