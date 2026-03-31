@@ -1,5 +1,5 @@
 import { Controller, Inject } from '@nestjs/common';
-import { EventPattern, Payload, ClientKafka } from '@nestjs/microservices';
+import { EventPattern, Payload, ClientKafka, KafkaContext, Ctx } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuditService } from './audit.service';
@@ -15,13 +15,20 @@ export class AuditConsumer {
     ) { }
 
     @EventPattern('transaction.events')
-    async handleTransactionEvent(@Payload() message: TransactionEvent) {
+    async handleTransactionEvent(
+        @Payload() message: TransactionEvent,
+        @Ctx() context: KafkaContext // Inject the Kafka Context to access headers
+    ) {
         try {
+            const headers = context.getMessage().headers!;
+            const correlationId = headers['x-correlation-id']?.toString();
+            console.log(`[TRACE: ${correlationId}] Processing event...`);
+
             // 1. Existing Logic: Save raw audit log
             await this.auditService.log(
                 message.fromUserId,
                 `TRANSACTION_${message.status}`,
-                message.metadata,
+                {...message.metadata, correlationId},
                 message.metadata.ip
             );
 

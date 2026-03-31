@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'; // npm install uuid
 import { Injectable, BadRequestException, InternalServerErrorException, Inject, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { DataSource } from 'typeorm';
@@ -26,6 +27,8 @@ export class WalletService implements OnModuleInit {
   }
 
   async transferFunds(fromUserId: string, toUserId: string, amount: number, ip: string) {
+    const correlationId = uuidv4();
+
     if (amount <= 0) throw new BadRequestException('Amount must be positive');
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -71,8 +74,12 @@ export class WalletService implements OnModuleInit {
           amount,
           metadata: { ip, timestamp: new Date().toISOString() },
         } as TransactionEvent,
+        headers: {
+          'x-correlation-id': correlationId,
+          'x-source-service': 'wallet-service',
+        },
       });
-      
+
       return { success: true, message: 'Transfer completed' };
     } catch (err) {
       await queryRunner.rollbackTransaction();
