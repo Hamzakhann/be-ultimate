@@ -1,37 +1,48 @@
 import { Controller, Inject } from '@nestjs/common';
 import { EventPattern, Payload, ClientKafka } from '@nestjs/microservices';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { AuditService } from './audit.service';
-import { type TransactionEvent } from '../../common/interfaces/transaction-event.interface';
+import { UserStats } from './schemas/user-stats.schema';
+import { type TransactionEvent, TransactionStatus } from '../../common/interfaces/transaction-event.interface';
 
 @Controller()
 export class AuditConsumer {
     constructor(
         private readonly auditService: AuditService,
-        @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka, // Inject for DLQ
+        @InjectModel(UserStats.name) private userStatsModel: Model<UserStats>, // Inject the Stats Model
+        @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
     ) { }
 
     @EventPattern('transaction.events')
     async handleTransactionEvent(@Payload() message: TransactionEvent) {
         try {
-            // Logic to save to MongoDB
+            // 1. Existing Logic: Save raw audit log
             await this.auditService.log(
                 message.fromUserId,
                 `TRANSACTION_${message.status}`,
                 message.metadata,
                 message.metadata.ip
             );
+
+            // 2. CQRS Logic: Update "Read Model" (Pre-calculated Stats)
+            if (message.status === TransactionStatus.SUCCESS) {
+                await this.userStatsModel.updateOne(
+                    { userId: message.fromUserId },
+                    {
+                        $inc: {
+                            totalTransactions: 1,
+                            totalVolumeUSD: message.amount
+                        },
+                        $set: { lastActivity: new Date() }
+                    },
+                    { upsert: true } // Create if doesn't exist
+                );
+                console.log(`--- READ MODEL UPDATED: Stats for User ${message.fromUserId} materialized ---`);
+            }
         } catch (error) {
-            console.error(`--- ERROR PROCESSING MESSAGE: ${error.message} ---`);
-
-            // Senior Logic: If it's a permanent error, move to DLQ
-            // In a real app, you might check 'attempts' count
-            this.kafkaClient.emit('transaction.events.dlq', {
-                originalMessage: message,
-                error: error.message,
-                failedAt: new Date().toISOString(),
-            });
-
-            console.log('--- MESSAGE MOVED TO DLQ ---');
+            // DLQ Logic (From Day 3)
+            this.kafkaClient.emit('transaction.events.dlq', { originalMessage: message, error: error.message });
         }
     }
 }

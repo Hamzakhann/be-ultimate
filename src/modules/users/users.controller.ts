@@ -5,13 +5,15 @@ import { WalletService } from './wallet.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { TransferDto } from './dto/transfer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AuditService } from '../audit/audit.service';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
     constructor(
         private readonly usersService: UsersService,
-        private readonly walletService: WalletService
+        private readonly walletService: WalletService,
+        private readonly auditService: AuditService,
     ) { }
 
     @Post('register')
@@ -45,5 +47,14 @@ export class UsersController {
             transferDto.amount,
             ip
         );
+    }
+
+
+    // Add this new endpoint
+    @UseGuards(JwtAuthGuard)
+    @Get('dashboard/stats')
+    async getMyStats(@Request() req: any) {
+        // We use the AuditService to fetch pre-calculated data
+        return this.auditService.getUserStats(req.user.userId);
     }
 }
