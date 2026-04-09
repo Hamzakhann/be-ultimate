@@ -8,6 +8,8 @@ import { RedisCustomModule } from './database/redis.module';
 import { CacheModule } from './common/cache/cache.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { KafkaCustomModule } from './database/kafka.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -57,12 +59,22 @@ import { KafkaCustomModule } from './database/kafka.module';
         },
       }),
     }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT!) || 6379,
+      },
+    }),
+    BullModule.registerQueue({
+      name: 'statement-generation',
+    }),
     KafkaCustomModule,
     RedisCustomModule,
     CacheModule,
     UsersModule,
     AuthModule,
-    AuditModule
+    AuditModule,
+    NotificationsModule
   ],
 })
 export class AppModule { }

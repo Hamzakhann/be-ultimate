@@ -17,26 +17,34 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
 
-  // 1. Connect Kafka Microservice
+  // 1. Connect AUDIT Microservice (Group 1)
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.KAFKA,
     options: {
-      client: {
-        brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
-      },
+      client: { brokers: [process.env.KAFKA_BROKER || 'localhost:9092'] },
       consumer: {
-        groupId: 'fintech-audit-consumer', // Unique ID for this task
+        groupId: 'fintech-audit-consumer',
         allowAutoTopicCreation: true,
-      },
-      // Senior Config: Retry and Error Handling
-      run: {
-        autoCommit: true,
-      },
-      subscribe: {
-        fromBeginning: false,
-      },
+      }
     },
   });
+
+  // 2. Connect NOTIFICATIONS Microservice (Group 2)
+  // This ensures BOTH services get a copy of the 'transaction.events' message
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.KAFKA,
+    options: {
+      client: { brokers: [process.env.KAFKA_BROKER || 'localhost:9092'] },
+      consumer: {
+        groupId: 'fintech-notifications-group',
+        allowAutoTopicCreation: true,
+      }
+    },
+  });
+
+  // Senior Tip: Add a small delay to let Kafka settle if topics are being auto-created
+  console.log('Waiting for Kafka metadata to stabilize...');
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   // 2. Start Microservices
   await app.startAllMicroservices();
@@ -50,4 +58,5 @@ async function bootstrap() {
   await app.listen(3000);
   console.log(`Application is running on: http://localhost:3000`);
 }
+
 bootstrap();

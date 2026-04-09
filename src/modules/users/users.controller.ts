@@ -1,5 +1,7 @@
 import { Controller, Post, Body, UseGuards, Get, Request, Ip } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { UsersService } from './users.service';
 import { WalletService } from './wallet.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -14,6 +16,7 @@ export class UsersController {
         private readonly usersService: UsersService,
         private readonly walletService: WalletService,
         private readonly auditService: AuditService,
+        @InjectQueue('statement-generation') private statementQueue: Queue
     ) { }
 
     @Post('register')
@@ -56,5 +59,24 @@ export class UsersController {
     async getMyStats(@Request() req: any) {
         // We use the AuditService to fetch pre-calculated data
         return this.auditService.getUserStats(req.user.userId);
+    }
+
+
+    @UseGuards(JwtAuthGuard)
+    @Post('statement/download')
+    async requestStatement(@Request() req: any) {
+        const jobId = `statement-${req.user.userId}-${Date.now()}`;
+
+        // Add job to Redis
+        await this.statementQueue.add('generate-pdf', {
+            userId: req.user.userId,
+            email: req.user.email,
+            format: 'PDF',
+        }, { jobId });
+
+        return {
+            message: 'Your statement is being generated. You will receive an email shortly.',
+            jobId
+        };
     }
 }

@@ -16,6 +16,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                         client: {
                             clientId: config.get<string>('KAFKA_CLIENT_ID') || 'fintech-app',
                             brokers: [config.get<string>('KAFKA_BROKER') || 'localhost:9092'],
+                            retry: {
+                                initialRetryTime: 300,
+                                retries: 10
+                            }
                         },
                         consumer: {
                             groupId: 'fintech-group', // Needed even for producers in NestJS

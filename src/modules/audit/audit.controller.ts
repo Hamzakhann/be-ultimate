@@ -28,7 +28,7 @@ export class AuditConsumer {
             await this.auditService.log(
                 message.fromUserId,
                 `TRANSACTION_${message.status}`,
-                {...message.metadata, correlationId},
+                { ...message.metadata, correlationId },
                 message.metadata.ip
             );
 
