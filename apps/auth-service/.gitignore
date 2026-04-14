@@ -46,9 +46,6 @@ lerna-debug.log*
 .temp
 .tmp
 
-# Monolith backup (migration reference only)
-apps/temp-backup
-
 # Runtime data
 pids
 *.pid
