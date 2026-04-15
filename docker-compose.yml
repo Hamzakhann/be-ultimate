@@ -45,6 +45,7 @@ services:
       POSTGRES_DB: fintech_auth
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./scripts/postgres:/docker-entrypoint-initdb.d
   kafka:
     image: apache/kafka:3.7.0
     container_name: fintech_kafka

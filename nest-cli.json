@@ -6,8 +6,10 @@
   "root": "apps/auth-service",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": false,
-    "plugins": ["@nestjs/swagger"]
+    "webpack": true,
+    "plugins": [
+      "@nestjs/swagger"
+    ]
   },
   "projects": {
     "auth-service": {
@@ -16,7 +18,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/auth-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/auth-service/tsconfig.json"
+        "tsConfigPath": "apps/auth-service/tsconfig.app.json"
       }
     },
     "common": {
@@ -26,6 +28,15 @@
       "sourceRoot": "libs/common/src",
       "compilerOptions": {
         "tsConfigPath": "libs/common/tsconfig.lib.json"
+      }
+    },
+    "user-service": {
+      "type": "application",
+      "root": "apps/user-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/user-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user-service/tsconfig.app.json"
       }
     }
   }

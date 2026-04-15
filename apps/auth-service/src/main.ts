@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Global route prefix for auth-service
-  app.setGlobalPrefix('api/v1/auth');
+  app.setGlobalPrefix('api/v1');
 
   // Validate all incoming DTOs automatically
   app.useGlobalPipes(

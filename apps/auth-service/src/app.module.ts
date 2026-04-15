@@ -3,14 +3,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module.js';
 import { User } from './auth/entities/user.entity.js';
-import { Wallet } from './auth/entities/wallet.entity.js';
+import { join } from 'path';
 
 @Module({
   imports: [
     // Load .env from the auth-service directory
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: join(process.cwd(), 'apps/auth-service/.env'),
     }),
 
     // TypeORM connected to the dedicated auth DB (AUTH_DB_* vars)
@@ -21,10 +21,10 @@ import { Wallet } from './auth/entities/wallet.entity.js';
         type: 'postgres',
         host: config.get<string>('AUTH_DB_HOST', 'localhost'),
         port: config.get<number>('AUTH_DB_PORT', 5432),
-        username: config.get<string>('AUTH_DB_USER', 'postgres'),
-        password: config.get<string>('AUTH_DB_PASS', ''),
+        username: config.get<string>('AUTH_DB_USER', 'admin'),
+        password: String(config.get<string>('AUTH_DB_PASS', 'password123')),
         database: config.get<string>('AUTH_DB_NAME', 'fintech_auth'),
-        entities: [User, Wallet],
+        entities: [User],
         synchronize: process.env.NODE_ENV !== 'production', // Auto-sync only in dev
         logging: process.env.NODE_ENV === 'development',
       }),
