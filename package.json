@@ -24,7 +24,8 @@
     "migration:revert": "npm run typeorm migration:revert",
     "dev:auth": "nest start auth-service --watch",
     "dev:user": "nest start user-service --watch",
-    "dev:wallet": "nest start wallet-service --watch"
+    "dev:wallet": "nest start wallet-service --watch",
+    "dev:gateway": "nest start api-gateway --watch"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
@@ -100,7 +101,12 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/apps/"
-    ]
+      "<rootDir>/apps/",
+      "<rootDir>/libs/"
+    ],
+    "moduleNameMapper": {
+      "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1",
+      "^(\\.\\.?/.*)\\.js$": "$1"
+    }
   }
 }
