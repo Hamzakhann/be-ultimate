@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq'; // Import this
+import { BullModule } from '@nestjs/bullmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
-import { Wallet } from './entities/wallet.entity';
-import { WalletService } from './wallet.service';
 import { AuditModule } from '../audit/audit.module';
 import { StatementProcessor } from './workers/statement.processor';
 
@@ -14,11 +12,11 @@ import { StatementProcessor } from './workers/statement.processor';
     BullModule.registerQueue({
       name: 'statement-generation',
     }),
-    TypeOrmModule.forFeature([User, Wallet]),
+    TypeOrmModule.forFeature([User]),
     AuditModule
   ],
   controllers: [UsersController],
-  providers: [UsersService, WalletService, StatementProcessor],
-  exports: [UsersService, WalletService],
+  providers: [UsersService, StatementProcessor],
+  exports: [UsersService],
 })
 export class UsersModule { }

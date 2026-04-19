@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  // Hybrid Application: HTTP + Kafka
+  // Hybrid Application: HTTP + Kafka + gRPC
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.KAFKA,
     options: {
@@ -18,6 +18,16 @@ async function bootstrap() {
       consumer: {
         groupId: 'user-service-consumer',
       },
+    },
+  });
+
+  const { USER_PROTO_PATH } = await import('@app/common');
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: {
+      package: 'user',
+      protoPath: USER_PROTO_PATH,
+      url: '0.0.0.0:50051',
     },
   });
 

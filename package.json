@@ -23,9 +23,12 @@
     "migration:run": "npm run typeorm migration:run",
     "migration:revert": "npm run typeorm migration:revert",
     "dev:auth": "nest start auth-service --watch",
-    "dev:user": "nest start user-service --watch"
+    "dev:user": "nest start user-service --watch",
+    "dev:wallet": "nest start wallet-service --watch"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
     "@nestjs-modules/ioredis": "^2.0.2",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",

@@ -27,7 +27,9 @@
       "entryFile": "index",
       "sourceRoot": "libs/common/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/common/tsconfig.lib.json"
+        "tsConfigPath": "libs/common/tsconfig.lib.json",
+        "assets": ["**/*.proto"],
+        "watchAssets": true
       }
     },
     "user-service": {
@@ -36,7 +38,24 @@
       "entryFile": "main",
       "sourceRoot": "apps/user-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/user-service/tsconfig.app.json"
+        "tsConfigPath": "apps/user-service/tsconfig.app.json",
+        "assets": [
+          { "include": "../../libs/common/src/proto/*.proto", "outDir": "proto", "flat": true }
+        ],
+        "watchAssets": true
+      }
+    },
+    "wallet-service": {
+      "type": "application",
+      "root": "apps/wallet-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/wallet-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/wallet-service/tsconfig.app.json",
+        "assets": [
+          { "include": "../../libs/common/src/proto/*.proto", "outDir": "proto", "flat": true }
+        ],
+        "watchAssets": true
       }
     }
   }

@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserProfile } from './entities/user-profile.entity.js';
 import { UsersService } from './users.service.js';
 import { UsersController } from './users.controller.js';
+import { UsersGrpcController } from './users.grpc.controller.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 
 @Module({
@@ -23,7 +24,7 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
             }),
         }),
     ],
-    controllers: [UsersController],
+    controllers: [UsersController, UsersGrpcController],
     providers: [UsersService, JwtStrategy],
     exports: [UsersService],
 })

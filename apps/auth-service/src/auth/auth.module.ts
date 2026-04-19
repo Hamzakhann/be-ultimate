@@ -6,7 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
-import { JwtStrategy } from './strategies/jwt.strategy.js';
+import { JwtStrategy } from '@app/common';
 import { User } from './entities/user.entity.js';
 
 @Module({

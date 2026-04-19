@@ -25,6 +25,9 @@ export class UserProfile {
     @Column({ nullable: true })
     bio?: string;
 
+    @Column({ default: true })
+    isActive!: boolean;
+
     @CreateDateColumn()
     createdAt!: Date;
 

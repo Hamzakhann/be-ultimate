@@ -1,5 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index, OneToOne } from 'typeorm';
-import { Wallet } from './wallet.entity';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 
 @Entity('users')
 @Index(['email', 'isActive']) // Composite Index
@@ -16,9 +15,6 @@ export class User {
 
   @Column({ default: true })
   isActive!: boolean;
-
-  @OneToOne(() => Wallet, (wallet) => wallet.user)
-  wallet!: Wallet;
 
   @CreateDateColumn()
   createdAt!: Date;
