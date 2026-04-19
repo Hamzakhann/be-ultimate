@@ -31,6 +31,14 @@ async function bootstrap() {
     },
   });
 
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host: '0.0.0.0',
+      port: 3003,
+    },
+  });
+
   app.setGlobalPrefix('api/v1');
 
   app.useGlobalPipes(
@@ -41,8 +49,9 @@ async function bootstrap() {
   );
 
   await app.startAllMicroservices();
-  const port = configService.get<number>('PORT', 3003);
+  const port = Number(configService.get<number>('PORT', 3003)) + 100;
   await app.listen(port);
-  console.log(`🚀 User Service running on http://localhost:${port}/api/v1/users`);
+  console.log(`🚀 User Service HTTP running on http://localhost:${port}/api/v1/users`);
+  console.log(`📡 User Service TCP Microservice running on port 3003`);
 }
 bootstrap();

@@ -26,6 +26,14 @@ async function bootstrap() {
     },
   });
 
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host: '0.0.0.0',
+      port: 3002,
+    },
+  });
+
   // Swagger Documentation
   const config = new DocumentBuilder()
     .setTitle('Wallet Service')
@@ -38,8 +46,9 @@ async function bootstrap() {
 
   // Start HTTP and Microservices
   await app.startAllMicroservices();
-  const port = process.env.PORT || 3002;
+  const port = (process.env.PORT ? parseInt(process.env.PORT as string) : 3002) + 100;
   await app.listen(port);
-  console.log(`Wallet Service is running on: http://localhost:${port}/api`);
+  console.log(`🚀 Wallet Service HTTP running on: http://localhost:${port}/api`);
+  console.log(`📡 Wallet Service TCP Microservice running on port 3002`);
 }
 bootstrap();

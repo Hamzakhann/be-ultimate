@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClientKafka } from '@nestjs/microservices';
+import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity.js';
 import * as argon2 from 'argon2';
@@ -25,23 +25,33 @@ export class AuthService {
    * Register a new user
    */
   async register(dto: any) {
-    const hashedPassword = await argon2.hash(dto.password);
+    try {
+      const hashedPassword = await argon2.hash(dto.password);
 
-    const user = await this.userRepository.save({
-      ...dto,
-      password: hashedPassword,
-    });
+      const user = await this.userRepository.save({
+        ...dto,
+        password: hashedPassword,
+      });
 
-    // Emit Kafka event
-    this.kafkaClient.emit('user.created', {
-      userId: user.id,
-      email: user.email,
-    });
+      // Emit Kafka event
+      this.kafkaClient.emit('user.created', {
+        userId: user.id,
+        email: user.email,
+      });
 
-    return {
-      message: 'User registered successfully',
-      userId: user.id,
-    };
+      return {
+        message: 'User registered successfully',
+        userId: user.id,
+      };
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new RpcException({
+          statusCode: 409,
+          message: 'User with this email already exists',
+        });
+      }
+      throw new RpcException(error.message);
+    }
   }
 
   /**
@@ -59,12 +69,12 @@ export class AuthService {
       .getOne();
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new RpcException({ statusCode: 401, message: 'Invalid credentials' });
     }
 
     const isMatch = await argon2.verify(user.password, pass);
     if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new RpcException({ statusCode: 401, message: 'Invalid credentials' });
     }
 
     return { id: user.id, email: user.email };

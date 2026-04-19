@@ -18,7 +18,7 @@ export class WalletService implements OnModuleInit {
     private readonly dataSource: DataSource,
     @Inject('KAFKA_SERVICE') private readonly kafkaClient: microservices.ClientKafka,
     @Inject('USER_PACKAGE') private readonly client: microservices.ClientGrpc,
-  ) {}
+  ) { }
 
   async onModuleInit() {
     await this.kafkaClient.connect();
@@ -27,7 +27,7 @@ export class WalletService implements OnModuleInit {
 
   async createWallet(userId: string): Promise<Wallet> {
     const walletRepository = this.dataSource.getRepository(Wallet);
-    
+
     // Idempotency check: Check if wallet already exists
     const existingWallet = await walletRepository.findOne({ where: { userId } });
     if (existingWallet) {
@@ -122,8 +122,9 @@ export class WalletService implements OnModuleInit {
 
       return { success: true, transactionId: transaction.id, balance: senderWallet.balance };
     } catch (err) {
+      console.log({ err })
       await queryRunner.rollbackTransaction();
-      
+
       // Optionally record failed transaction
       this.kafkaClient.emit('transaction.events', {
         key: fromUserId,
@@ -135,7 +136,7 @@ export class WalletService implements OnModuleInit {
           metadata: { ip, error: err.message, timestamp: new Date().toISOString() },
         },
       });
-      
+
       throw err instanceof BadRequestException ? err : new InternalServerErrorException(err.message || 'Transaction failed');
     } finally {
       await queryRunner.release();
