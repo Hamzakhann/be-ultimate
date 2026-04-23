@@ -5,24 +5,29 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
 import { AuthService } from './auth.service.js';
 import { LoginDto } from './dto/login.dto.js';
-import { RegisterDto } from './dto/register.dto.js';
+import { RegisterUserCommand } from './commands/impl/register-user.command.js';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly commandBus: CommandBus,
+  ) { }
 
-  @MessagePattern({ cmd: 'register' })
+  @MessagePattern({ cmd: 'register' }, Transport.TCP)
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully and Kafka event emitted' })
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Body() dto: any, @Payload() data?: any) {
+    const payload = data?.dto || dto;
+    return this.commandBus.execute(new RegisterUserCommand(payload.email, payload.password));
   }
 
   @MessagePattern({ cmd: 'login' })

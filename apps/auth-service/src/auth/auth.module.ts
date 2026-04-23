@@ -4,13 +4,17 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CqrsModule } from '@nestjs/cqrs';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
 import { JwtStrategy } from '@app/common';
 import { User } from './entities/user.entity.js';
+import { CommandHandlers } from './commands/index.js';
+import { EventHandlers } from './events/index.js';
 
 @Module({
   imports: [
+    CqrsModule,
     // Provide entity-specific TypeORM feature
     TypeOrmModule.forFeature([User]),
 
@@ -46,7 +50,7 @@ import { User } from './entities/user.entity.js';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, ...CommandHandlers, ...EventHandlers],
   exports: [AuthService],
 })
 export class AuthModule {}

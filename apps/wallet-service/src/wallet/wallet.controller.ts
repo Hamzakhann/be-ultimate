@@ -1,11 +1,15 @@
-import { Controller, Get, Post, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req } from '@nestjs/common';
 import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
+import { CommandBus } from '@nestjs/cqrs';
 import { WalletService } from './wallet.service.js';
-import { JwtAuthGuard } from '@app/common/guards/jwt-auth.guard.js';
+import { TransferMoneyCommand } from './commands/impl/transfer-money.command.js';
 
 @Controller('wallet')
 export class WalletController {
-  constructor(private readonly walletService: WalletService) {}
+  constructor(
+    private readonly walletService: WalletService,
+    private readonly commandBus: CommandBus,
+  ) {}
 
   @MessagePattern({ cmd: 'get_balance' }, Transport.TCP)
   @Get('balance')
@@ -27,11 +31,8 @@ export class WalletController {
     const amount = data?.dto?.amount || body?.amount;
     const ip = req?.ip || data?.ip || '0.0.0.0';
 
-    return await this.walletService.transferFunds(
-      fromUserId,
-      toUserId,
-      amount,
-      ip,
+    return await this.commandBus.execute(
+      new TransferMoneyCommand(fromUserId, toUserId, amount, ip),
     );
   }
 }

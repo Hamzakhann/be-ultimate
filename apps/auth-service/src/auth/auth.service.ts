@@ -1,10 +1,10 @@
-import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity.js';
 import * as argon2 from 'argon2';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthService {
@@ -13,46 +13,7 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
 
     private readonly jwtService: JwtService,
-
-    @Inject('AUTH_KAFKA_CLIENT') private readonly kafkaClient: ClientKafka,
   ) { }
-
-  async onModuleInit() {
-    await this.kafkaClient.connect();
-  }
-
-  /**
-   * Register a new user
-   */
-  async register(dto: any) {
-    try {
-      const hashedPassword = await argon2.hash(dto.password);
-
-      const user = await this.userRepository.save({
-        ...dto,
-        password: hashedPassword,
-      });
-
-      // Emit Kafka event
-      this.kafkaClient.emit('user.created', {
-        userId: user.id,
-        email: user.email,
-      });
-
-      return {
-        message: 'User registered successfully',
-        userId: user.id,
-      };
-    } catch (error) {
-      if (error.code === '23505') {
-        throw new RpcException({
-          statusCode: 409,
-          message: 'User with this email already exists',
-        });
-      }
-      throw new RpcException(error.message);
-    }
-  }
 
   /**
    * Validate user credentials against the auth DB.

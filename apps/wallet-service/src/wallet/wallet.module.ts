@@ -2,14 +2,18 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CqrsModule } from '@nestjs/cqrs';
 import { WalletService } from './wallet.service.js';
 import { WalletController } from './wallet.controller.js';
 import { WalletConsumer } from './wallet.consumer.js';
 import { Wallet } from './entities/wallet.entity.js';
 import { Transaction } from './entities/transaction.entity.js';
+import { CommandHandlers } from './commands/index.js';
+import { EventHandlers } from './events/index.js';
 
 @Module({
   imports: [
+    CqrsModule,
     TypeOrmModule.forFeature([Wallet, Transaction]),
     ClientsModule.registerAsync([
       {
@@ -48,7 +52,7 @@ import { Transaction } from './entities/transaction.entity.js';
     ]),
   ],
   controllers: [WalletController, WalletConsumer],
-  providers: [WalletService],
+  providers: [WalletService, ...CommandHandlers, ...EventHandlers],
   exports: [WalletService],
 })
 export class WalletModule {}
