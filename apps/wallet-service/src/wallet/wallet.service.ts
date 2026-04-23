@@ -21,9 +21,5 @@ export class WalletService {
     return await walletRepository.save(wallet);
   }
 
-  async getBalance(userId: string): Promise<number> {
-    const wallet = await this.dataSource.getRepository(Wallet).findOne({ where: { userId } });
-    if (!wallet) throw new BadRequestException('Wallet not found');
-    return Number(wallet.balance);
   }
 }

@@ -38,9 +38,9 @@ export class UsersService {
     }
 
     /**
-     * Get profile by userId
+     * Get profile by userId (Internal)
      */
-    async getProfile(userId: string) {
+    private async _getProfile(userId: string) {
         return this.userProfileRepository.findOneOrFail({
             where: { userId }
         });
@@ -50,7 +50,7 @@ export class UsersService {
      * Update profile
      */
     async updateProfile(userId: string, updateData: Partial<UserProfile>) {
-        const profile = await this.getProfile(userId);
+        const profile = await this._getProfile(userId);
         Object.assign(profile, updateData);
         return this.userProfileRepository.save(profile);
     }

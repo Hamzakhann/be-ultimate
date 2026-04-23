@@ -1,15 +1,19 @@
-import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
-import { EventPattern, Payload, MessagePattern } from '@nestjs/microservices';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Patch, Body } from '@nestjs/common';
+import { EventPattern, Payload, MessagePattern, Transport } from '@nestjs/microservices';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { QueryBus } from '@nestjs/cqrs';
 import { UsersService } from './users.service.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
-import { JwtAuthGuard, CurrentUser } from '@app/common';
-import { Transport } from '@nestjs/microservices';
+import { CurrentUser } from '@app/common';
+import { GetUserProfileQuery } from './queries/impl/get-user-profile.query.js';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) { }
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly queryBus: QueryBus,
+    ) { }
 
     /**
      * Kafka listener for user.created event
@@ -29,7 +33,7 @@ export class UsersController {
     async getMe(@CurrentUser() user: any, @Payload() data?: any) {
         // When called via MessagePattern, user might be in data or user decorator
         const userId = user?.userId || data?.userId;
-        return this.usersService.getProfile(userId);
+        return this.queryBus.execute(new GetUserProfileQuery(userId));
     }
 
     /**

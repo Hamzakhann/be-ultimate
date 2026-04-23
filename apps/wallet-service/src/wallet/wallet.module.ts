@@ -10,6 +10,7 @@ import { Wallet } from './entities/wallet.entity.js';
 import { Transaction } from './entities/transaction.entity.js';
 import { CommandHandlers } from './commands/index.js';
 import { EventHandlers } from './events/index.js';
+import { QueryHandlers } from './queries/index.js';
 
 @Module({
   imports: [
@@ -52,7 +53,7 @@ import { EventHandlers } from './events/index.js';
     ]),
   ],
   controllers: [WalletController, WalletConsumer],
-  providers: [WalletService, ...CommandHandlers, ...EventHandlers],
+  providers: [WalletService, ...CommandHandlers, ...EventHandlers, ...QueryHandlers],
   exports: [WalletService],
 })
 export class WalletModule {}

@@ -1,11 +1,11 @@
-import { Controller, Post, Get, Patch, Body, Inject, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Inject, UseGuards, Req, Query } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { JwtAuthGuard } from '@app/common';
 import { CurrentUser } from '@app/common';
 
 @Controller('auth')
 export class AuthProxyController {
-  constructor(@Inject('AUTH_SERVICE') private authClient: ClientProxy) {}
+  constructor(@Inject('AUTH_SERVICE') private authClient: ClientProxy) { }
 
   @Post('register')
   register(@Body() dto: any) {
@@ -20,7 +20,7 @@ export class AuthProxyController {
 
 @Controller('users')
 export class UserProxyController {
-  constructor(@Inject('USER_SERVICE') private userClient: ClientProxy) {}
+  constructor(@Inject('USER_SERVICE') private userClient: ClientProxy) { }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -37,7 +37,7 @@ export class UserProxyController {
 
 @Controller('wallet')
 export class WalletProxyController {
-  constructor(@Inject('WALLET_SERVICE') private walletClient: ClientProxy) {}
+  constructor(@Inject('WALLET_SERVICE') private walletClient: ClientProxy) { }
 
   @UseGuards(JwtAuthGuard)
   @Get('balance')
@@ -48,10 +48,23 @@ export class WalletProxyController {
   @UseGuards(JwtAuthGuard)
   @Post('transfer')
   transfer(@CurrentUser() user: any, @Body() dto: any, @Req() req: any) {
-    return this.walletClient.send({ cmd: 'transfer' }, { 
-        userId: user.userId, 
-        dto,
-        ip: req.ip 
+    return this.walletClient.send({ cmd: 'transfer' }, {
+      userId: user.userId,
+      dto,
+      ip: req.ip
     });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('history')
+  getHistory(
+    @CurrentUser() user: any,
+    @Query('limit') limit: number,
+    @Query('offset') offset: number,
+  ) {
+    return this.walletClient.send(
+      { cmd: 'get_history' },
+      { userId: user.userId, limit, offset },
+    );
   }
 }
