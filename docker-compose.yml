@@ -68,6 +68,14 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     volumes:
       - kafka_data:/var/lib/kafka/data
+  consul:
+    image: hashicorp/consul:1.15
+    container_name: fintech_consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    command: "agent -server -bootstrap-expect=1 -ui -client=0.0.0.0"
 volumes:
   postgres_data:
   mongo1_data:

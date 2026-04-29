@@ -5,9 +5,14 @@ import { WalletModule } from './wallet/wallet.module.js';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '@app/common';
+import { DiscoveryModule } from '@app/common';
+import { TerminusModule } from '@nestjs/terminus';
+import { HealthController } from './health.controller.js';
 
 @Module({
   imports: [
+    DiscoveryModule,
+    TerminusModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: 'apps/wallet-service/.env',
@@ -37,6 +42,7 @@ import { JwtStrategy } from '@app/common';
     }),
     WalletModule,
   ],
+  controllers: [HealthController],
   providers: [JwtStrategy],
 })
 export class AppModule {}

@@ -28,6 +28,7 @@
     "dev:gateway": "nest start api-gateway --watch"
   },
   "dependencies": {
+    "@godaddy/terminus": "^4.12.1",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@nestjs-modules/ioredis": "^2.0.2",
@@ -42,14 +43,17 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.4",
+    "@nestjs/terminus": "^11.1.1",
     "@nestjs/typeorm": "^11.0.0",
     "argon2": "^0.44.0",
     "bullmq": "^5.73.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "consul": "^2.0.1",
     "ioredis": "^5.9.1",
     "kafkajs": "^2.2.4",
     "mongoose": "^8.21.0",
+    "nestjs-consul": "^1.5.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
@@ -83,7 +87,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "webpack": "^5.106.2"
   },
   "jest": {
     "moduleFileExtensions": [

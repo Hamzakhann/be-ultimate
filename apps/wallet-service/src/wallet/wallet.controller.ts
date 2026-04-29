@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Req, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, Query, BadRequestException } from '@nestjs/common';
 import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { WalletService } from './wallet.service.js';
@@ -39,16 +39,36 @@ export class WalletController {
   @Post('transfer')
   async transfer(
     @Req() req: any,
-    @Body() body: { toUserId: string; amount: number },
+    @Body() body: any,
     @Payload() data?: any,
   ) {
+    // Extracting data from either HTTP (req/body) or TCP (data)
     const fromUserId = req?.user?.userId || data?.userId;
     const toUserId = data?.dto?.toUserId || body?.toUserId;
     const amount = data?.dto?.amount || body?.amount;
     const ip = req?.ip || data?.ip || '0.0.0.0';
 
-    return await this.commandBus.execute(
-      new TransferMoneyCommand(fromUserId, toUserId, amount, ip),
-    );
+    console.log('[Wallet Service] Received Transfer Request:', { 
+      from: fromUserId, 
+      to: toUserId, 
+      amount, 
+      transport: req ? 'HTTP' : 'TCP' 
+    });
+
+    if (!fromUserId || !toUserId || !amount) {
+      console.error('[Wallet Service] Missing required fields:', { fromUserId, toUserId, amount });
+      throw new BadRequestException('Missing fromUserId, toUserId, or amount');
+    }
+
+    try {
+      const result = await this.commandBus.execute(
+        new TransferMoneyCommand(fromUserId, toUserId, Number(amount), ip),
+      );
+      console.log('[Wallet Service] Transfer Success:', result);
+      return result;
+    } catch (error) {
+      console.error('[Wallet Service] Transfer Command Error:', error);
+      throw error;
+    }
   }
 }

@@ -44,6 +44,7 @@ export class TransferMoneyHandler implements ICommandHandler<TransferMoneyComman
         throw new BadRequestException('Recipient account is inactive');
       }
     } catch (error) {
+      console.error('[TransferMoneyHandler] gRPC Validation Error:', error);
       if (error.constructor.name === 'NotFoundException' || error.constructor.name === 'BadRequestException' || error.status === 404 || error.status === 400) throw error;
       throw new InternalServerErrorException('Failed to validate recipient via gRPC: ' + error.message);
     }
@@ -98,6 +99,7 @@ export class TransferMoneyHandler implements ICommandHandler<TransferMoneyComman
 
       return { success: true, transactionId: transaction.id, balance: senderWallet.balance };
     } catch (err) {
+      console.error('[TransferMoneyHandler] Transaction Logic Error:', err);
       await queryRunner.rollbackTransaction();
       throw err instanceof BadRequestException ? err : new InternalServerErrorException(err.message || 'Transaction failed');
     } finally {

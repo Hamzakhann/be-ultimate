@@ -4,9 +4,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module.js';
 import { UserProfile } from './users/entities/user-profile.entity.js';
 import { join } from 'path';
+import { DiscoveryModule } from '@app/common';
+import { TerminusModule } from '@nestjs/terminus';
+import { HealthController } from './health.controller.js';
 
 @Module({
   imports: [
+    DiscoveryModule,
+    TerminusModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: join(process.cwd(), 'apps/user-service/.env'),
@@ -29,5 +34,6 @@ import { join } from 'path';
 
     UsersModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

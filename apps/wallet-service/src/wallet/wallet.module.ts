@@ -11,6 +11,7 @@ import { Transaction } from './entities/transaction.entity.js';
 import { CommandHandlers } from './commands/index.js';
 import { EventHandlers } from './events/index.js';
 import { QueryHandlers } from './queries/index.js';
+import { DiscoveryModule, DiscoveryService } from '@app/common';
 
 @Module({
   imports: [
@@ -36,19 +37,26 @@ import { QueryHandlers } from './queries/index.js';
       },
       {
         name: 'USER_PACKAGE',
-        imports: [ConfigModule],
-        useFactory: async (config: ConfigService) => {
-          const { USER_PROTO_PATH } = await import('@app/common');
-          return {
-            transport: Transport.GRPC,
-            options: {
-              package: 'user',
-              protoPath: USER_PROTO_PATH,
-              url: config.get<string>('USER_SERVICE_GRPC_URL', 'localhost:50051'),
-            },
-          };
+        imports: [DiscoveryModule],
+        inject: [DiscoveryService],
+        useFactory: async (discoveryService: DiscoveryService) => {
+          try {
+            const { USER_PROTO_PATH } = await import('@app/common');
+            const { address, port } = await discoveryService.discoverService('user-service-grpc');
+            console.log(`[WalletModule] Resolved user-service-grpc at ${address}:${port}`);
+            return {
+              transport: Transport.GRPC,
+              options: {
+                package: 'user',
+                protoPath: USER_PROTO_PATH,
+                url: `${address}:${port}`,
+              },
+            };
+          } catch (error) {
+            console.error('[WalletModule] gRPC Discovery Failed:', error.message);
+            throw error;
+          }
         },
-        inject: [ConfigService],
       },
     ]),
   ],

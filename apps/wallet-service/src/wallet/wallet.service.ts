@@ -20,6 +20,4 @@ export class WalletService {
     const wallet = walletRepository.create({ userId, balance: 0 });
     return await walletRepository.save(wallet);
   }
-
-  }
 }

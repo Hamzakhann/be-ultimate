@@ -47,12 +47,20 @@ export class WalletProxyController {
 
   @UseGuards(JwtAuthGuard)
   @Post('transfer')
-  transfer(@CurrentUser() user: any, @Body() dto: any, @Req() req: any) {
-    return this.walletClient.send({ cmd: 'transfer' }, {
-      userId: user.userId,
-      dto,
-      ip: req.ip
-    });
+  async transfer(@CurrentUser() user: any, @Body() dto: any, @Req() req: any) {
+    console.log('[Gateway Proxy] Incoming Transfer Request:', { userId: user?.userId, dto });
+    try {
+      const result = await this.walletClient.send({ cmd: 'transfer' }, {
+        userId: user.userId,
+        dto,
+        ip: req.ip
+      }).toPromise(); // Use toPromise() or lastValueFrom to wait for the result
+      console.log('[Gateway Proxy] Transfer Success Result:', result);
+      return result;
+    } catch (error) {
+      console.error('[Gateway Proxy] Transfer Error:', error);
+      throw error;
+    }
   }
 
   @UseGuards(JwtAuthGuard)

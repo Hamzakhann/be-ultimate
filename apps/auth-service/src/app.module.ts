@@ -4,9 +4,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module.js';
 import { User } from './auth/entities/user.entity.js';
 import { join } from 'path';
+import { TerminusModule } from '@nestjs/terminus';
+import { DiscoveryModule } from '@app/common';
+import { HealthController } from './health.controller.js';
 
 @Module({
   imports: [
+    TerminusModule,
+    DiscoveryModule,
     // Load .env from the auth-service directory
     ConfigModule.forRoot({
       isGlobal: true,
@@ -32,5 +37,6 @@ import { join } from 'path';
 
     AuthModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule { }
