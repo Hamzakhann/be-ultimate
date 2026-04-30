@@ -13,7 +13,7 @@ export class MoneyTransferredHandler implements IEventHandler<MoneyTransferredEv
     const { fromUserId, toUserId, amount, transactionId, ip } = event;
 
     // Side effect: Emit Kafka event
-    this.kafkaClient.emit('transaction.events', {
+    this.kafkaClient.emit('wallet.events', {
       key: fromUserId,
       value: {
         status: 'SUCCESS',

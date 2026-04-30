@@ -12,6 +12,7 @@ import { CommandHandlers } from './commands/index.js';
 import { EventHandlers } from './events/index.js';
 import { QueryHandlers } from './queries/index.js';
 import { DiscoveryModule, DiscoveryService } from '@app/common';
+import { WalletSagas } from './sagas/wallet.sagas.js';
 
 @Module({
   imports: [
@@ -61,7 +62,7 @@ import { DiscoveryModule, DiscoveryService } from '@app/common';
     ]),
   ],
   controllers: [WalletController, WalletConsumer],
-  providers: [WalletService, ...CommandHandlers, ...EventHandlers, ...QueryHandlers],
+  providers: [WalletService, WalletSagas, ...CommandHandlers, ...EventHandlers, ...QueryHandlers],
   exports: [WalletService],
 })
 export class WalletModule {}

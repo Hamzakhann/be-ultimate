@@ -1,6 +1,7 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { TransferMoneyCommand } from '../impl/transfer-money.command.js';
 import { MoneyTransferredEvent } from '../../events/impl/money-transferred.event.js';
+import { MoneyDeductedEvent } from '../../events/impl/money-deducted.event.js';
 import { DataSource } from 'typeorm';
 import { Wallet } from '../../entities/wallet.entity.js';
 import { Transaction, TransactionStatus, TransactionType } from '../../entities/transaction.entity.js';
@@ -9,23 +10,12 @@ import * as microservices from '@nestjs/microservices';
 import { lastValueFrom, Observable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-interface UserGrpcService {
-  findOne(data: { id: string }): Observable<{ id: string; email: string; isActive: boolean }>;
-}
-
 @CommandHandler(TransferMoneyCommand)
-export class TransferMoneyHandler implements ICommandHandler<TransferMoneyCommand>, OnModuleInit {
-  private userService: UserGrpcService;
-
+export class TransferMoneyHandler implements ICommandHandler<TransferMoneyCommand> {
   constructor(
     private readonly dataSource: DataSource,
     private readonly eventBus: EventBus,
-    @Inject('USER_PACKAGE') private readonly client: microservices.ClientGrpc,
   ) {}
-
-  onModuleInit() {
-    this.userService = this.client.getService<UserGrpcService>('UserService');
-  }
 
   async execute(command: TransferMoneyCommand) {
     const { fromUserId, toUserId, amount, ip } = command;
@@ -35,20 +25,6 @@ export class TransferMoneyHandler implements ICommandHandler<TransferMoneyComman
     if (fromUserId === toUserId) throw new BadRequestException('Cannot transfer to self');
 
     // 1. gRPC Recipient Check
-    try {
-      const recipient = await lastValueFrom(this.userService.findOne({ id: toUserId }));
-      if (!recipient || !recipient.id) {
-        throw new NotFoundException('Recipient not found in User Service');
-      }
-      if (!recipient.isActive) {
-        throw new BadRequestException('Recipient account is inactive');
-      }
-    } catch (error) {
-      console.error('[TransferMoneyHandler] gRPC Validation Error:', error);
-      if (error.constructor.name === 'NotFoundException' || error.constructor.name === 'BadRequestException' || error.status === 404 || error.status === 400) throw error;
-      throw new InternalServerErrorException('Failed to validate recipient via gRPC: ' + error.message);
-    }
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -59,49 +35,46 @@ export class TransferMoneyHandler implements ICommandHandler<TransferMoneyComman
         lock: { mode: 'pessimistic_write' },
       });
 
-      const receiverWallet = await queryRunner.manager.findOne(Wallet, {
-        where: { userId: toUserId },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (!senderWallet || !receiverWallet) {
-        throw new BadRequestException('One or more wallets not found');
+      if (!senderWallet) {
+        throw new BadRequestException('Sender wallet not found');
       }
 
       if (Number(senderWallet.balance) < amount) {
         throw new BadRequestException('Insufficient funds');
       }
 
-      // 2. Update Balances
+      // 2. Update Sender Balance (Only)
       senderWallet.balance = Number(senderWallet.balance) - amount;
-      receiverWallet.balance = Number(receiverWallet.balance) + amount;
-
       await queryRunner.manager.save(senderWallet);
-      await queryRunner.manager.save(receiverWallet);
 
-      // 3. Record Transaction
+      // 3. Record Transaction (PENDING)
       const transaction = queryRunner.manager.create(Transaction, {
         fromUserId,
         toUserId,
         amount,
         type: TransactionType.TRANSFER,
-        status: TransactionStatus.SUCCESS,
+        status: TransactionStatus.PENDING,
         metadata: { ip, correlationId, timestamp: new Date().toISOString() },
       });
       await queryRunner.manager.save(transaction);
 
       await queryRunner.commitTransaction();
 
-      // 4. Publish Event
+      // 4. Publish Deduction Event (Triggers Saga)
       this.eventBus.publish(
-        new MoneyTransferredEvent(fromUserId, toUserId, amount, transaction.id, ip),
+        new MoneyDeductedEvent(fromUserId, toUserId, amount, transaction.id, ip),
       );
 
-      return { success: true, transactionId: transaction.id, balance: senderWallet.balance };
+      return { 
+        success: true, 
+        message: 'Transfer initiated and is being processed',
+        transactionId: transaction.id, 
+        balance: senderWallet.balance 
+      };
     } catch (err) {
-      console.error('[TransferMoneyHandler] Transaction Logic Error:', err);
       await queryRunner.rollbackTransaction();
-      throw err instanceof BadRequestException ? err : new InternalServerErrorException(err.message || 'Transaction failed');
+      console.error('[TransferMoneyHandler] Transaction Logic Error:', err);
+      throw err instanceof BadRequestException || err instanceof NotFoundException ? err : new InternalServerErrorException(err.message || 'Transaction failed');
     } finally {
       await queryRunner.release();
     }
