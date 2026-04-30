@@ -26,7 +26,8 @@
     "dev:user": "nest start user-service --watch",
     "dev:wallet": "nest start wallet-service --watch",
     "dev:gateway": "nest start api-gateway --watch",
-    "dev:notification": "nest start notification-service --watch"
+    "dev:notification": "nest start notification-service --watch",
+    "dev:audit": "nest start audit-service --watch"
   },
   "dependencies": {
     "@godaddy/terminus": "^4.12.1",

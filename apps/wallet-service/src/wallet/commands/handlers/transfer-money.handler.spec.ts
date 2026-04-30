@@ -62,7 +62,7 @@ describe('TransferMoneyHandler', () => {
     userGrpcService = mockUserGrpcService;
 
     // Mock gRPC service initialization
-    handler.onModuleInit();
+    // handler.onModuleInit();
   });
 
   it('should successfully transfer funds and publish event', async () => {

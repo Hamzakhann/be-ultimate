@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy, DiscoveryModule, DiscoveryService } from '@app/common';
 import { AuthProxyController, UserProxyController, WalletProxyController } from './proxy.controller';
+import { AuditController } from './audit/audit.controller';
 import { join } from 'path';
 
 @Module({
@@ -71,7 +72,12 @@ import { join } from 'path';
       },
     ]),
   ],
-  controllers: [AuthProxyController, UserProxyController, WalletProxyController],
+  controllers: [
+    AuthProxyController,
+    UserProxyController,
+    WalletProxyController,
+    AuditController,
+  ],
   providers: [JwtStrategy],
 })
 export class ApiGatewayModule {}
