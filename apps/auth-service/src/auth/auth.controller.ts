@@ -26,20 +26,21 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully and Kafka event emitted' })
   async register(@Body() dto: any, @Payload() data?: any) {
-    const payload = data?.dto || dto;
+    const payload = data || dto;
     return this.commandBus.execute(new RegisterUserCommand(payload.email, payload.password));
   }
 
-  @MessagePattern({ cmd: 'login' })
+  @MessagePattern({ cmd: 'login' }, Transport.TCP)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user and get JWT token' })
   @ApiResponse({ status: 200, description: 'Returns a signed JWT access_token' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() dto: any, @Payload() data?: any) {
+    const payload = data || dto;
     const user = await this.authService.validateUser(
-      loginDto.email,
-      loginDto.password,
+      payload.email,
+      payload.password,
     );
     return this.authService.login(user);
   }

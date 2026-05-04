@@ -76,30 +76,46 @@ export class DiscoveryService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Discover a healthy service by name
+   * Discover a healthy service by name with optional retry logic
    */
-  async discoverService(serviceName: string): Promise<{ address: string; port: number }> {
-    try {
-      // Use health.service to get only passing nodes
-      const services = await this.consul.health.service({
-        service: serviceName,
-        passing: true,
-      });
+  async discoverService(
+    serviceName: string, 
+    retries = 30, 
+    delayMs = 5000
+  ): Promise<{ address: string; port: number }> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const services = await this.consul.health.service({
+          service: serviceName,
+          passing: true,
+        });
 
-      if (services && services.length > 0) {
-        // Pick the first healthy instance
-        const entry = services[0];
-        const address = entry.Service.Address || entry.Node.Address;
-        const port = entry.Service.Port;
+        if (services && services.length > 0) {
+          const entry = services[0];
+          const address = entry.Service.Address || entry.Node.Address;
+          const port = entry.Service.Port;
+          this.logger.log(`Discovered healthy service ${serviceName} at ${address}:${port}`);
+          return { address, port };
+        }
         
-        this.logger.log(`Discovered healthy service ${serviceName} at ${address}:${port}`);
-        
-        return { address, port };
+        if (i < retries - 1) {
+          this.logger.warn(`No healthy instances of ${serviceName} found. Retrying in ${delayMs / 1000}s... (${i + 1}/${retries})`);
+          await this.delay(delayMs);
+        }
+      } catch (error) {
+        if (i < retries - 1) {
+          this.logger.warn(`Discovery failed for ${serviceName}: ${error.message}. Retrying...`);
+          await this.delay(delayMs);
+        } else {
+          this.logger.error(`Service discovery failed for ${serviceName} after ${retries} attempts.`);
+          throw error;
+        }
       }
-      throw new Error(`No healthy instances of ${serviceName} found in Consul`);
-    } catch (error) {
-      this.logger.error(`Service discovery failed for ${serviceName}: ${error.message}`);
-      throw error;
     }
+    throw new Error(`No healthy instances of ${serviceName} found in Consul after multiple attempts`);
+  }
+
+  private delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
