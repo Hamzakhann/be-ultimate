@@ -18,6 +18,37 @@ The platform is designed as a suite of decoupled services that communicate throu
 
 ---
 
+## 📡 API Reference (via Gateway)
+
+The API Gateway exposes the following unified endpoints on `http://localhost:3000/api/v1`.
+
+### 🔐 Authentication (`auth-service`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/auth/register` | Create a new fintech account. | ❌ |
+| `POST` | `/auth/login` | Authenticate and receive a JWT token. | ❌ |
+
+### 👤 User Management (`user-service`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/users/me` | Fetch current user profile details. | ✅ |
+| `PATCH` | `/users/profile` | Update profile information (e.g. name). | ✅ |
+
+### 💳 Wallet Operations (`wallet-service`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/wallet/balance` | Get current wallet balance. | ✅ |
+| `POST` | `/wallet/transfer`| Send money to another user ID. | ✅ |
+| `GET` | `/wallet/history` | Paginated transaction history. | ✅ |
+
+### 📜 Audit & Analytics (`audit-service`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/audit/logs/:userId` | Retrieve security/action logs. | ✅ |
+| `GET` | `/audit/stats/:userId`| Get total volume & transaction count. | ✅ |
+
+---
+
 ## 🛠️ Tech Stack & Concepts
 
 ### **Backend (NestJS Monorepo)**
