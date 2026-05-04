@@ -97,5 +97,39 @@ npm run dev
 
 ---
 
+## 🗺️ Architectural Pattern Roadmap
+
+FintechPlus follows a rigorous microservices blueprint. Below is the status of the patterns implemented and those planned for upcoming phases.
+
+### 📊 Summary Table
+| Category | Must-Know Concept | Implementation Status |
+| :--- | :--- | :--- |
+| **Traffic** | Service Mesh, API Gateway | ✅ API Gateway Live |
+| **Data** | Saga, CQRS, Event Sourcing | ✅ CQRS Live / 🚀 Saga Coming |
+| **Stability** | Circuit Breaker, Retries | ✅ Retries Live / 🚀 Circuit Breaker Coming |
+| **Visibility** | Distributed Tracing, Log Aggregation | 🚀 Coming Soon |
+
+### 🛠️ Detailed Pattern Breakdown
+
+| Category | Pattern | Status | Purpose in FintechPlus |
+| :--- | :--- | :--- | :--- |
+| **Communication** | **API Gateway** | ✅ Done | Centralized entry point on Port 3000 for routing & auth. |
+| | **Service Registry** | ✅ Done | **Consul** (The "Yellow Pages") for dynamic service discovery. |
+| | **BFF** | ❌ No | Not needed yet; single unified Gateway for Web. |
+| | **Service Mesh** | ❌ No | Overkill for 6 services; handled by Consul + Gateway. |
+| **Data** | **CQRS** | ✅ Done | Separated Command/Query logic in Wallet Service for scale. |
+| | **DB-per-Service** | ✅ Done | Auth, User, and Wallet use isolated PostgreSQL instances. |
+| | **Saga Pattern** | 🚀 Planned | Managing "Undo" logic and distributed consistency for transfers. |
+| | **Event Sourcing** | ❌ No | Using State-based storage for core ledgers currently. |
+| **Reliability** | **Retry Pattern** | ✅ Done | Smart retries in Discovery & Kafka/gRPC communication. |
+| | **Circuit Breaker** | 🚀 Planned | Protecting the Gateway from cascading failures if a service hangs. |
+| | **Bulkhead** | ❌ No | Handled naturally by Docker container resource isolation. |
+| **Observability** | **Log Aggregation**| 🚀 Planned | Centralized log dashboard (ELK Stack) for all microservices. |
+| | **Tracing** | 🚀 Planned | **Zipkin/Jaeger** to track requests across the distributed mesh. |
+| **Deployment** | **Strangler Fig** | ✅ Done | Used to migrate legacy logic into the new microservices. |
+| | **Sidecar** | ❌ No | Not using a dedicated Service Mesh proxy (Istio) yet. |
+
+---
+
 ## 👨‍💻 Developer
 Developed with ❤️ as a showcase of **Advanced Agentic Coding** and **Distributed Systems Design**.
