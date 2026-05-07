@@ -10,10 +10,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             inject: [ConfigService],
             useFactory: (config: ConfigService) => ({
                 type: 'single',
-                url: `redis://${config.get('REDIS_HOST')}:${config.get('REDIS_PORT')}`,
+                url: `redis://${config.get('REDIS_HOST', 'localhost')}:${config.get('REDIS_PORT', 6379)}`,
             }),
         }),
     ],
     exports: [IoRedisModule],
 })
-export class RedisCustomModule { }
+export class RedisCustomModule {}

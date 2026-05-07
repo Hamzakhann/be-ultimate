@@ -1,9 +1,9 @@
 import { Module, Global } from '@nestjs/common';
-import { CacheService } from './cache.service';
+import { CacheService } from './cache.service.js';
 
 @Global() // Global so we don't have to import it in every feature module
 @Module({
     providers: [CacheService],
     exports: [CacheService],
 })
-export class CacheModule { }
+export class CacheModule {}

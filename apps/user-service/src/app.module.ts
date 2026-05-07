@@ -7,6 +7,8 @@ import { join } from 'path';
 import { DiscoveryModule } from '@app/common';
 import { TerminusModule } from '@nestjs/terminus';
 import { HealthController } from './health.controller.js';
+import { RedisCustomModule } from './database/redis.module.js';
+import { CacheModule } from './common/cache/cache.module.js';
 
 @Module({
   imports: [
@@ -28,9 +30,16 @@ import { HealthController } from './health.controller.js';
         password: String(config.get<string>('USER_DB_PASSWORD', 'password123')),
         database: config.get<string>('USER_DB_NAME', 'fintech_user_profile'),
         entities: [UserProfile],
-        synchronize: true, // For development only
+        synchronize: false, // Managed via migrations
+        migrations: ['dist/apps/user-service/src/database/migrations/*.js'],
+        migrationsRun: false, // Run explicitly via CLI
       }),
     }),
+
+    // Redis connection (global — available everywhere in this service)
+    RedisCustomModule,
+    // Cache-Aside abstraction on top of Redis (global)
+    CacheModule,
 
     UsersModule,
   ],
