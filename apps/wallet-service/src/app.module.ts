@@ -8,6 +8,7 @@ import { JwtStrategy } from '@app/common';
 import { DiscoveryModule } from '@app/common';
 import { TerminusModule } from '@nestjs/terminus';
 import { HealthController } from './health.controller.js';
+import { SearchModule } from '@app/search';
 
 @Module({
   imports: [
@@ -40,6 +41,10 @@ import { HealthController } from './health.controller.js';
         signOptions: { expiresIn: '1h' },
       }),
     }),
+
+    // Elasticsearch — gives WalletService access to SearchService
+    SearchModule,
+
     WalletModule,
   ],
   controllers: [HealthController],

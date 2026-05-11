@@ -13,13 +13,21 @@ async function bootstrap() {
     options: {
       client: {
         brokers: [configService.get<string>('KAFKA_BROKER', 'localhost:9092')],
+        retry: {
+          initialRetryTime: 1000,
+          retries: 10,
+        },
       },
       consumer: {
         groupId: 'notification-service-consumer',
+        allowAutoTopicCreation: true,
       },
     },
   });
 
+  console.log('Waiting for infrastructure stabilization...');
+  await new Promise((r) => setTimeout(r, 3000));
+  
   await app.startAllMicroservices();
   
   const port = configService.get('PORT', 3004);

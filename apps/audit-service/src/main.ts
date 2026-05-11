@@ -15,9 +15,14 @@ async function bootstrap() {
     options: {
       client: {
         brokers: [configService.get<string>('KAFKA_BROKER', 'localhost:9092')],
+        retry: {
+          initialRetryTime: 1000,
+          retries: 10,
+        },
       },
       consumer: {
         groupId: 'audit-service-consumer',
+        allowAutoTopicCreation: true,
       },
     },
   });
@@ -31,6 +36,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  logger.log('Waiting for Kafka to stabilize...');
+  await new Promise((r) => setTimeout(r, 3000));
 
   await app.startAllMicroservices();
   

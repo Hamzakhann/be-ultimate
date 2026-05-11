@@ -31,6 +31,7 @@
     "dev": "concurrently --kill-others -n AUTH,USER,WALLET,GATEWAY,NOTIF,AUDIT -c blue,green,yellow,magenta,cyan,white \"npm run dev:auth\" \"npm run dev:user\" \"npm run dev:wallet\" \"npm run dev:gateway\" \"npm run dev:notification\" \"npm run dev:audit\""
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^9.4.0",
     "@godaddy/terminus": "^4.12.1",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
@@ -40,6 +41,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/cqrs": "^11.0.3",
+    "@nestjs/elasticsearch": "^11.1.0",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/microservices": "^11.1.17",
     "@nestjs/mongoose": "^11.0.4",

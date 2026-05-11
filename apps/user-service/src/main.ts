@@ -14,9 +14,14 @@ async function bootstrap() {
     options: {
       client: {
         brokers: [configService.get<string>('KAFKA_BROKER', 'localhost:9092')],
+        retry: {
+          initialRetryTime: 1000,
+          retries: 10,
+        },
       },
       consumer: {
         groupId: 'user-service-consumer',
+        allowAutoTopicCreation: true,
       },
     },
   });
@@ -47,6 +52,10 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Let Kafka metadata stabilize before consuming
+  console.log('Waiting for Kafka to stabilize...');
+  await new Promise((r) => setTimeout(r, 3000));
 
   await app.startAllMicroservices();
   const port = Number(configService.get<number>('PORT', 3003)) + 100;

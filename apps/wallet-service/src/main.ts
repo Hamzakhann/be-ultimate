@@ -18,9 +18,14 @@ async function bootstrap() {
     options: {
       client: {
         brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
+        retry: {
+          initialRetryTime: 1000,
+          retries: 10,
+        },
       },
       consumer: {
         groupId: 'wallet-consumer-group',
+        allowAutoTopicCreation: true,
       },
     },
   });
@@ -42,6 +47,10 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
+
+  // Wait for dependencies like Kafka metadata to fully settle
+  console.log('Waiting for environment stabilization...');
+  await new Promise((r) => setTimeout(r, 3000));
 
   // Start HTTP and Microservices
   await app.startAllMicroservices();
