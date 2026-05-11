@@ -2,10 +2,14 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy, DiscoveryModule, DiscoveryService } from '@app/common';
+import { JwtStrategy, DiscoveryModule, DiscoveryService, CommonCacheModule } from '@app/common';
 import { AuthProxyController, UserProxyController, WalletProxyController } from './proxy.controller';
 import { AuditController } from './audit/audit.controller';
 import { join } from 'path';
+
+import { SearchModule } from '@app/search';
+
+import { SearchController } from './search.controller.js';
 
 @Module({
   imports: [
@@ -15,6 +19,8 @@ import { join } from 'path';
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     DiscoveryModule,
+    SearchModule,
+    CommonCacheModule,
     ClientsModule.registerAsync([
       {
         name: 'AUTH_SERVICE',
@@ -77,6 +83,7 @@ import { join } from 'path';
     UserProxyController,
     WalletProxyController,
     AuditController,
+    SearchController,
   ],
   providers: [JwtStrategy],
 })

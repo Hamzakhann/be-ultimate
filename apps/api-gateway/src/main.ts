@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ApiGatewayModule } from './api-gateway.module';
-import { HttpRpcExceptionFilter } from '@app/common';
+import { HttpRpcExceptionFilter, createGlobalLogger } from '@app/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(ApiGatewayModule);
+  // Explicitly supply our dynamic shared Winston Logger
+  const app = await NestFactory.create(ApiGatewayModule, {
+    logger: createGlobalLogger('api-gateway'),
+  });
   
   app.setGlobalPrefix('api/v1');
   app.enableCors(); // Crucial for future React app

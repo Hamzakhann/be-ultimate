@@ -2,9 +2,12 @@ import { NestFactory } from '@nestjs/core';
 import { NotificationServiceModule } from './notification-service.module.js';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
+import { createGlobalLogger } from '@app/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(NotificationServiceModule);
+  const app = await NestFactory.create(NotificationServiceModule, {
+    logger: createGlobalLogger('notification-service'),
+  });
   const configService = app.get(ConfigService);
 
   // Kafka Microservice

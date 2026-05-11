@@ -110,6 +110,8 @@ services:
   logstash:
     image: docker.elastic.co/logstash/logstash:8.10.2
     container_name: fintech_logstash
+    ports:
+      - "5044:5044"
     volumes:
       - ./logstash/pipeline:/usr/share/logstash/pipeline
     environment:

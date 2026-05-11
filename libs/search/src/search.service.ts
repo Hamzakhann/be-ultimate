@@ -116,34 +116,83 @@ export class SearchService implements OnModuleInit {
   }
 
   /**
-   * Full-text search across the description field.
-   * Also supports optional keyword filters (status, sender_id).
+   * Advanced fuzzy search, range filtering, and bucket aggregations.
    */
   async searchTransactions(opts: {
     query?: string;
     status?: string;
     sender_id?: string;
+    userId?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    startDate?: string | Date;
+    endDate?: string | Date;
     from?: number;
     size?: number;
-  }): Promise<{ hits: any[]; total: number }> {
+  }): Promise<{ hits: any[]; total: number; aggregations?: any }> {
     const must: any[] = [];
     const filter: any[] = [];
 
+    // 1. Full-Text Fuzzy Search
     if (opts.query) {
-      must.push({ match: { description: opts.query } });
+      must.push({
+        multi_match: {
+          query: opts.query,
+          fields: ['description', 'sender_id', 'receiver_id'],
+          fuzziness: 'AUTO', // Allows typos (e.g., 'piza' -> 'pizza')
+        },
+      });
     } else {
       must.push({ match_all: {} });
     }
 
-    if (opts.status)    filter.push({ term: { status:    opts.status } });
-    if (opts.sender_id) filter.push({ term: { sender_id: opts.sender_id } });
+    // 2. Exact Term & Domain Identity Filtering
+    if (opts.status) filter.push({ term: { status: opts.status } });
 
+    // Multi-tenant Security: If universal 'userId' is provided, ensure user is either sender OR receiver
+    if (opts.userId) {
+      filter.push({
+        bool: {
+          should: [
+            { term: { sender_id:   opts.userId } },
+            { term: { receiver_id: opts.userId } },
+          ],
+          minimum_should_match: 1,
+        }
+      });
+    } else if (opts.sender_id) {
+      // Legacy: fallback to exact field
+      filter.push({ term: { sender_id: opts.sender_id } });
+    }
+
+    // 3. Range Filters (Amount & Date)
+    if (opts.minAmount !== undefined || opts.maxAmount !== undefined) {
+      const range: any = {};
+      if (opts.minAmount !== undefined) range.gte = opts.minAmount;
+      if (opts.maxAmount !== undefined) range.lte = opts.maxAmount;
+      filter.push({ range: { amount: range } });
+    }
+
+    if (opts.startDate || opts.endDate) {
+      const range: any = {};
+      if (opts.startDate) range.gte = opts.startDate;
+      if (opts.endDate) range.lte = opts.endDate;
+      filter.push({ range: { timestamp: range } });
+    }
+
+    // 4. Execute Search with Aggregations
     const result = await this.esService.search({
       index: TRANSACTIONS_INDEX,
       from:  opts.from ?? 0,
       size:  opts.size ?? 10,
       query: { bool: { must, filter } },
       sort:  [{ timestamp: { order: 'desc' } }],
+      aggs: {
+        // Return breakdown of statuses
+        status_breakdown: {
+          terms: { field: 'status' }
+        }
+      }
     });
 
     const hits  = result.hits.hits.map((h) => ({ ...(h._source as Record<string, unknown>), _score: h._score }));
@@ -151,7 +200,11 @@ export class SearchService implements OnModuleInit {
       ? result.hits.total
       : (result.hits.total as any)?.value ?? 0;
 
-    return { hits, total };
+    return { 
+      hits, 
+      total, 
+      aggregations: result.aggregations 
+    };
   }
 
   /**

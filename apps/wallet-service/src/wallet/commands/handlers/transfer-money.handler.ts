@@ -5,6 +5,7 @@ import { MoneyDeductedEvent } from '../../events/impl/money-deducted.event.js';
 import { DataSource } from 'typeorm';
 import { Wallet } from '../../entities/wallet.entity.js';
 import { Transaction, TransactionStatus, TransactionType } from '../../entities/transaction.entity.js';
+import { Outbox, OutboxStatus } from '../../entities/outbox.entity.js';
 import { BadRequestException, NotFoundException, InternalServerErrorException, Inject, OnModuleInit } from '@nestjs/common';
 import * as microservices from '@nestjs/microservices';
 import { lastValueFrom, Observable } from 'rxjs';
@@ -58,9 +59,26 @@ export class TransferMoneyHandler implements ICommandHandler<TransferMoneyComman
       });
       await queryRunner.manager.save(transaction);
 
+      // 4. Transactional Outbox: Record initial event atomically
+      const outboxEvent = queryRunner.manager.create(Outbox, {
+        type: 'transaction.created',
+        payload: {
+          id: transaction.id,
+          fromUserId: transaction.fromUserId,
+          toUserId: transaction.toUserId,
+          amount: transaction.amount,
+          type: transaction.type,
+          status: transaction.status,
+          metadata: transaction.metadata,
+          createdAt: new Date().toISOString(),
+        },
+        status: OutboxStatus.PENDING,
+      });
+      await queryRunner.manager.save(outboxEvent);
+
       await queryRunner.commitTransaction();
 
-      // 4. Publish Deduction Event (Triggers Saga)
+      // 5. Publish Deduction Event (Triggers Saga)
       this.eventBus.publish(
         new MoneyDeductedEvent(fromUserId, toUserId, amount, transaction.id, ip),
       );

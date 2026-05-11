@@ -2,11 +2,16 @@ import { Controller, Get, Param, Query, Logger } from '@nestjs/common';
 import { EventPattern, Payload, Transport } from '@nestjs/microservices';
 import { AuditServiceService } from './audit-service.service.js';
 
+import { SearchService } from '@app/search';
+
 @Controller('audit')
 export class AuditServiceController {
   private readonly logger = new Logger(AuditServiceController.name);
 
-  constructor(private readonly auditService: AuditServiceService) {}
+  constructor(
+    private readonly auditService: AuditServiceService,
+    private readonly searchService: SearchService,
+  ) {}
 
   @Get('logs/:userId')
   async getLogs(@Param('userId') userId: string, @Query('limit') limit?: string) {
@@ -61,5 +66,35 @@ export class AuditServiceController {
       ipAddress: metadata?.ip,
       metadata,
     });
+  }
+
+  // ─── Real-Time Synchronization to Elasticsearch ──────────────────────────
+
+  @EventPattern('transactions-sync', Transport.KAFKA)
+  async syncTransactionToSearch(@Payload() data: any) {
+    const event = data.value || data;
+    
+    // Extract original payload from the Kafka payload structure
+    // event represents our Transaction record as captured in outbox
+    const { id, fromUserId, toUserId, amount, type, status, metadata, createdAt } = event;
+
+    this.logger.log(`🔄 Syncing Transaction [${id}] to Elasticsearch via Outbox Stream.`);
+
+    try {
+      await this.searchService.indexTransaction({
+        id,
+        sender_id:   fromUserId,
+        receiver_id: toUserId,
+        amount:      typeof amount === 'string' ? parseFloat(amount) : amount,
+        currency:    'USD', // Default
+        status:      status,
+        event_type:  type,
+        description: `Money Transfer: ${fromUserId} -> ${toUserId} [${type}]`,
+        timestamp:   createdAt || new Date().toISOString(),
+      });
+      this.logger.log(`✅ Successfully synced Transaction [${id}] to Search Engine.`);
+    } catch (error) {
+      this.logger.error(`❌ CRITICAL: Failed to index transaction ${id} to Elastic: ${error.message}`);
+    }
   }
 }

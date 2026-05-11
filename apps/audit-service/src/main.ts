@@ -3,10 +3,13 @@ import { AuditServiceModule } from './audit-service.module.js';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { createGlobalLogger } from '@app/common';
 
 async function bootstrap() {
+  const app = await NestFactory.create(AuditServiceModule, {
+    logger: createGlobalLogger('audit-service'),
+  });
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AuditServiceModule);
   const configService = app.get(ConfigService);
 
   // Kafka Microservice

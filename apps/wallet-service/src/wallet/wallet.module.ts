@@ -14,10 +14,13 @@ import { QueryHandlers } from './queries/index.js';
 import { DiscoveryModule, DiscoveryService } from '@app/common';
 import { WalletSagas } from './sagas/wallet.sagas.js';
 
+import { OutboxRelayService } from './outbox-relay.service.js';
+import { Outbox } from './entities/outbox.entity.js';
+
 @Module({
   imports: [
     CqrsModule,
-    TypeOrmModule.forFeature([Wallet, Transaction]),
+    TypeOrmModule.forFeature([Wallet, Transaction, Outbox]),
     ClientsModule.registerAsync([
       {
         name: 'KAFKA_SERVICE',
@@ -62,7 +65,7 @@ import { WalletSagas } from './sagas/wallet.sagas.js';
     ]),
   ],
   controllers: [WalletController, WalletConsumer],
-  providers: [WalletService, WalletSagas, ...CommandHandlers, ...EventHandlers, ...QueryHandlers],
+  providers: [WalletService, OutboxRelayService, WalletSagas, ...CommandHandlers, ...EventHandlers, ...QueryHandlers],
   exports: [WalletService],
 })
 export class WalletModule {}

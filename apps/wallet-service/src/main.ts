@@ -3,8 +3,12 @@ import { AppModule } from './app.module.js';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { createGlobalLogger } from '@app/common';
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: createGlobalLogger('wallet-service'),
+  });
 
   // Set Global Prefix
   app.setGlobalPrefix('api');

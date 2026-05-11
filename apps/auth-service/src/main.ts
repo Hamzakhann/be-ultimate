@@ -3,9 +3,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
+import { createGlobalLogger } from '@app/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: createGlobalLogger('auth-service'),
+  });
 
   // Global route prefix for auth-service
   app.setGlobalPrefix('api/v1');

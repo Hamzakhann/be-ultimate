@@ -10,6 +10,8 @@ import { AuditLog, AuditLogSchema } from './schemas/audit-log.schema.js';
 import { UserStats, UserStatsSchema } from './schemas/user-stats.schema.js';
 import { join } from 'path';
 
+import { SearchModule } from '@app/search';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,6 +40,7 @@ import { join } from 'path';
     ]),
     DiscoveryModule,
     TerminusModule,
+    SearchModule,
   ],
   controllers: [HealthController, AuditServiceController],
   providers: [AuditServiceService],

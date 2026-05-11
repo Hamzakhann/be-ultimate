@@ -3,9 +3,12 @@ import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
+import { createGlobalLogger } from '@app/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: createGlobalLogger('user-service'),
+  });
   const configService = app.get(ConfigService);
 
   // Hybrid Application: HTTP + Kafka + gRPC

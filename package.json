@@ -58,6 +58,7 @@
     "ioredis": "^5.9.1",
     "kafkajs": "^2.2.4",
     "mongoose": "^8.21.0",
+    "nest-winston": "^1.10.2",
     "nestjs-consul": "^1.5.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -66,7 +67,10 @@
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
     "typeorm": "^0.3.28",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "winston": "^3.19.0",
+    "winston-elasticsearch": "^0.19.0",
+    "winston-logstash-transport": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
