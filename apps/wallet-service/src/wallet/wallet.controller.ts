@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Body, Req, Query, BadRequestException } from '@nestjs/common';
 import { MessagePattern, Payload, Transport } from '@nestjs/microservices';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { UserPayload } from '@app/common';
 import { WalletService } from './wallet.service.js';
 import { TransferMoneyCommand } from './commands/impl/transfer-money.command.js';
 import { GetBalanceQuery } from './queries/impl/get-balance.query.js';
 import { GetTransactionHistoryQuery } from './queries/impl/get-transaction-history.query.js';
+import { GetWalletStatsQuery } from './queries/impl/get-wallet-stats.query.js';
 
 @Controller('wallet')
 export class WalletController {
@@ -17,8 +19,15 @@ export class WalletController {
   @MessagePattern({ cmd: 'get_balance' }, Transport.TCP)
   @Get('balance')
   async getBalance(@Req() req: any, @Payload() data?: any) {
-    const userId = req?.user?.userId || data?.userId;
+    const userId = (req?.user as UserPayload)?.userId || data?.userId;
     return this.queryBus.execute(new GetBalanceQuery(userId));
+  }
+
+  @MessagePattern({ cmd: 'get_stats' }, Transport.TCP)
+  @Get('stats')
+  async getStats(@Req() req: any, @Payload() data?: any) {
+    const userId = (req?.user as UserPayload)?.userId || data?.userId;
+    return this.queryBus.execute(new GetWalletStatsQuery(userId));
   }
 
   @MessagePattern({ cmd: 'get_history' }, Transport.TCP)
@@ -29,7 +38,7 @@ export class WalletController {
     @Query('offset') offset: number,
     @Payload() data?: any,
   ) {
-    const userId = req?.user?.userId || data?.userId;
+    const userId = (req?.user as UserPayload)?.userId || data?.userId;
     const l = data?.limit || limit || 10;
     const o = data?.offset || offset || 0;
     return this.queryBus.execute(new GetTransactionHistoryQuery(userId, l, o));
@@ -43,8 +52,8 @@ export class WalletController {
     @Payload() data?: any,
   ) {
     // Extracting data from either HTTP (req/body) or TCP (data)
-    const fromUserId = req?.user?.userId || data?.userId;
-    const toUserId = data?.dto?.toUserId || body?.toUserId;
+    const fromUserId = (req?.user as UserPayload)?.userId || data?.userId;
+    const toUserId = data?.dto?.toUserId || body?.toUserId || data?.dto?.recipientId || body?.recipientId;
     const amount = data?.dto?.amount || body?.amount;
     const ip = req?.ip || data?.ip || '0.0.0.0';
 

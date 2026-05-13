@@ -35,5 +35,6 @@
         "libs/search/src/*"
       ]
     }
-  }
+  },
+  "exclude": ["node_modules", "dist", "frontend"]
 }

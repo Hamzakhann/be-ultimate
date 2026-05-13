@@ -30,9 +30,9 @@ import { CacheModule } from './common/cache/cache.module.js';
         password: String(config.get<string>('USER_DB_PASSWORD', 'password123')),
         database: config.get<string>('USER_DB_NAME', 'fintech_user_profile'),
         entities: [UserProfile],
-        synchronize: false, // Managed via migrations
-        migrations: ['dist/apps/user-service/src/database/migrations/*.js'],
-        migrationsRun: false, // Run explicitly via CLI
+        synchronize: true, // Auto-sync in dev to apply new UserProfile fields
+        // migrations: ['dist/apps/user-service/src/database/migrations/*.js'],
+        // migrationsRun: false,
       }),
     }),
 

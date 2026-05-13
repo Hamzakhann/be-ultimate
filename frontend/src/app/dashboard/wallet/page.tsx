@@ -1,5 +1,5 @@
 'use client';
-
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,13 +19,18 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Transaction } from '@/types';
+import { UserProfile } from '@/hooks/useAuth';
 
-const transferSchema = z.object({
-  recipientId: z.string().min(1, 'Recipient ID is required'),
+const searchUserSchema = z.object({
+  email: z.string().email('Enter a valid email address to find user'),
+});
+
+const transferAmountSchema = z.object({
   amount: z.number().positive('Amount must be greater than 0'),
 });
 
-type TransferForm = z.infer<typeof transferSchema>;
+type SearchUserForm = z.infer<typeof searchUserSchema>;
+type TransferAmountForm = z.infer<typeof transferAmountSchema>;
 
 export default function WalletPage() {
   const queryClient = useQueryClient();
@@ -48,33 +53,62 @@ export default function WalletPage() {
     },
   });
 
+  // Wizard State
+  const [step, setStep] = useState<1 | 2>(1);
+  const [recipient, setRecipient] = useState<UserProfile | null>(null);
+
+  // Search Mutation
+  const searchMutation = useMutation({
+    mutationFn: async (data: SearchUserForm) => {
+      const res = await api.get(`/users/search?email=${encodeURIComponent(data.email)}`);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setRecipient(data);
+      setStep(2);
+    },
+    onError: () => {
+      toast.error('User not found with that email address.');
+    },
+  });
+
   // Transfer Mutation
   const transferMutation = useMutation({
-    mutationFn: async (data: TransferForm) => {
-      return api.post('/wallet/transfer', data);
+    mutationFn: async (data: TransferAmountForm) => {
+      if (!recipient) throw new Error('Recipient is required');
+      return api.post('/wallet/transfer', {
+        recipientId: recipient.userId,
+        amount: data.amount,
+      });
     },
     onSuccess: () => {
-      toast.success('Transfer initiated successfully!');
-      // Optimistic update: Invalidate queries to refetch
+      toast.success('Transfer successful!');
       queryClient.invalidateQueries({ queryKey: ['balance'] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
+      setStep(1);
+      setRecipient(null);
+      resetSearch();
+      resetAmount();
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Transfer failed.');
     },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<TransferForm>({
-    resolver: zodResolver(transferSchema),
-    defaultValues: {
-      recipientId: '',
-      amount: 0,
-    },
+  const { register: registerSearch, handleSubmit: handleSearchSubmit, reset: resetSearch, formState: { errors: searchErrors } } = useForm<SearchUserForm>({
+    resolver: zodResolver(searchUserSchema),
   });
 
-  const onTransfer: SubmitHandler<TransferForm> = (data) => {
+  const { register: registerAmount, handleSubmit: handleAmountSubmit, reset: resetAmount, formState: { errors: amountErrors } } = useForm<TransferAmountForm>({
+    resolver: zodResolver(transferAmountSchema),
+  });
+
+  const onSearchSubmit: SubmitHandler<SearchUserForm> = (data) => {
+    searchMutation.mutate(data);
+  };
+
+  const onTransferSubmit: SubmitHandler<TransferAmountForm> = (data) => {
     transferMutation.mutate(data);
-    reset();
   };
 
   return (
@@ -104,7 +138,7 @@ export default function WalletPage() {
               {balanceLoading ? (
                 <div className="h-10 w-32 bg-white/20 animate-pulse rounded"></div>
               ) : (
-                `$${balanceData?.toLocaleString() || '0.00'}`
+                `$${balanceData?.balance?.toLocaleString() || '0.00'}`
               )}
             </div>
             <div className="mt-4 text-sm text-indigo-200 flex items-center">
@@ -116,34 +150,74 @@ export default function WalletPage() {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm col-span-1 md:col-span-2">
             <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
               <Send className="h-5 w-5 mr-2 text-indigo-600" />
-              Quick Transfer
+              Send Money Securely
             </h3>
-            <form onSubmit={handleSubmit((data: any) => onTransfer(data as TransferForm))} className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <input
-                  {...register('recipientId')}
-                  placeholder="Recipient User ID"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                />
-                {errors.recipientId && <p className="mt-1 text-xs text-red-600">{errors.recipientId.message}</p>}
+
+            {step === 1 ? (
+              <form onSubmit={handleSearchSubmit(onSearchSubmit)} className="flex flex-col md:flex-row gap-4 items-start">
+                <div className="flex-1 w-full">
+                  <input
+                    {...registerSearch('email')}
+                    placeholder="Recipient's Email Address"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-black"
+                  />
+                  {searchErrors.email && <p className="mt-1 text-xs text-red-600">{searchErrors.email.message}</p>}
+                </div>
+                <button
+                  type="submit"
+                  disabled={searchMutation.isPending}
+                  className="bg-slate-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-slate-800 transition-all flex items-center justify-center disabled:opacity-50 w-full md:w-auto"
+                >
+                  {searchMutation.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : 'Find User'}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                {/* Recipient Profile Card */}
+                <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-12 w-12 rounded-full bg-slate-200 overflow-hidden shadow-sm flex items-center justify-center font-bold text-slate-400">
+                      {recipient?.avatarUrl ? (
+                        <img src={recipient.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                      ) : (
+                        recipient?.firstName?.charAt(0) || 'U'
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900">{recipient?.firstName} {recipient?.lastName}</h4>
+                      <p className="text-xs text-slate-500">{recipient?.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setStep(1); setRecipient(null); }}
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-1 bg-indigo-50 rounded-lg"
+                  >
+                    Change
+                  </button>
+                </div>
+
+                <form onSubmit={handleAmountSubmit(onTransferSubmit)} className="flex flex-col md:flex-row gap-4 items-start pt-2">
+                  <div className="flex-1 w-full relative">
+                    <span className="absolute left-4 top-3.5 text-slate-500 font-semibold">$</span>
+                    <input
+                      {...registerAmount('amount', { valueAsNumber: true })}
+                      type="number"
+                      step="0.01"
+                      placeholder="Amount to send"
+                      className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold text-black"
+                    />
+                    {amountErrors.amount && <p className="mt-1 text-xs text-red-600">{amountErrors.amount.message}</p>}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={transferMutation.isPending}
+                    className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all flex items-center justify-center disabled:opacity-50 w-full md:w-auto shadow-md"
+                  >
+                    {transferMutation.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : 'Confirm Transfer'}
+                  </button>
+                </form>
               </div>
-              <div className="w-full md:w-32">
-                <input
-                  {...register('amount', { valueAsNumber: true })}
-                  type="number"
-                  placeholder="Amount"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                />
-                {errors.amount && <p className="mt-1 text-xs text-red-600">{errors.amount.message}</p>}
-              </div>
-              <button
-                type="submit"
-                disabled={transferMutation.isPending}
-                className="bg-slate-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-slate-800 transition-all flex items-center justify-center disabled:opacity-50"
-              >
-                {transferMutation.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : 'Send'}
-              </button>
-            </form>
+            )}
           </div>
         </div>
 
@@ -152,7 +226,7 @@ export default function WalletPage() {
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <h3 className="font-semibold text-slate-900 flex items-center">
               <History className="h-5 w-5 mr-2 text-indigo-600" />
-              Transaction History
+              Recent Transactions
             </h3>
           </div>
           <div className="overflow-x-auto">
@@ -160,7 +234,7 @@ export default function WalletPage() {
               <thead>
                 <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Transaction ID</th>
+                  <th className="px-6 py-4">Transaction Details</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Date</th>
                 </tr>
@@ -189,9 +263,29 @@ export default function WalletPage() {
                           {tx.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-slate-600">{tx.id}</td>
-                      <td className="px-6 py-4 font-semibold text-slate-900">
-                        {tx.fromUserId === 'me' ? '-' : '+'}${tx.amount}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center mr-3 font-bold text-slate-400 text-xs shadow-sm">
+                            {tx.counterparty?.avatarUrl ? (
+                              <img src={tx.counterparty.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                            ) : (
+                              tx.counterparty?.firstName?.charAt(0) || 'U'
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 text-sm">
+                              {tx.direction === 'OUTBOUND' ? 'Sent to' : 'Received from'}{' '}
+                              {tx.counterparty?.firstName} {tx.counterparty?.lastName}
+                            </p>
+                            <p className="text-xs font-mono text-slate-400">ID: {tx.id.split('-')[0]}...</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={cn(
+                        "px-6 py-4 font-bold text-sm",
+                        tx.direction === 'INBOUND' ? "text-emerald-600" : "text-slate-900"
+                      )}>
+                        {tx.direction === 'INBOUND' ? '+' : '-'}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-500">
                         {format(new Date(tx.createdAt), 'MMM dd, yyyy HH:mm')}

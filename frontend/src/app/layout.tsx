@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
+import SocketProvider from "@/components/providers/SocketProvider";
 import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,8 +21,10 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full antialiased bg-slate-50 text-slate-900`}>
         <QueryProvider>
-          {children}
-          <Toaster position="top-right" richColors />
+          <SocketProvider>
+            {children}
+            <Toaster position="top-right" richColors />
+          </SocketProvider>
         </QueryProvider>
       </body>
     </html>

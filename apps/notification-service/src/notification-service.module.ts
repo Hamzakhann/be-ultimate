@@ -6,6 +6,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { HealthController } from './health.controller.js';
 import { NotificationServiceController } from './notification-service.controller.js';
 import { NotificationServiceService } from './notification-service.service.js';
+import { NotificationsGateway } from './notifications.gateway.js';
 import { join } from 'path';
 
 @Module({
@@ -48,6 +49,6 @@ import { join } from 'path';
     ]),
   ],
   controllers: [HealthController, NotificationServiceController],
-  providers: [NotificationServiceService],
+  providers: [NotificationServiceService, NotificationsGateway],
 })
 export class NotificationServiceModule {}

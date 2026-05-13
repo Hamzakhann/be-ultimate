@@ -112,8 +112,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Bell className="h-6 w-6" />
               <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-600 border border-slate-300">
-              AD
+            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-600 border border-slate-300 overflow-hidden">
+              {user?.profile?.avatarUrl ? (
+                <img src={user.profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                user?.profile?.firstName?.charAt(0) || 'U'
+              )}
             </div>
           </div>
         </header>

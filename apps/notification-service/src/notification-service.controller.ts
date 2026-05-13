@@ -2,6 +2,8 @@ import { Controller, Inject, OnModuleInit, Logger } from '@nestjs/common';
 import * as microservices from '@nestjs/microservices';
 import { Observable, lastValueFrom } from 'rxjs';
 
+import { NotificationsGateway } from './notifications.gateway.js';
+
 interface UserGrpcService {
   findOne(data: { id: string }): Observable<{ id: string; email: string; isActive: boolean }>;
 }
@@ -11,7 +13,10 @@ export class NotificationServiceController implements OnModuleInit {
   private readonly logger = new Logger(NotificationServiceController.name);
   private userService: UserGrpcService;
 
-  constructor(@Inject('USER_PACKAGE') private readonly client: microservices.ClientGrpc) {}
+  constructor(
+    @Inject('USER_PACKAGE') private readonly client: microservices.ClientGrpc,
+    private readonly notificationsGateway: NotificationsGateway,
+  ) {}
 
   onModuleInit() {
     this.userService = this.client.getService<UserGrpcService>('UserService');
@@ -40,6 +45,14 @@ export class NotificationServiceController implements OnModuleInit {
       const email = recipient?.email || 'unknown@example.com';
 
       this.logger.log(`📧 Notification Sent! To: ${email} | Message: You received $${amount} from User ${fromUserId}`);
+
+      // Emit real-time notification to recipient via WebSockets
+      this.notificationsGateway.sendNotification(toUserId, 'transfer_received', {
+        fromUserId,
+        amount,
+        transactionId,
+        message: `You received $${amount} from another user.`
+      });
     } catch (error) {
       this.logger.error(`❌ Failed to send notification: ${error.message}`);
     }

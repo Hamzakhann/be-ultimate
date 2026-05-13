@@ -1,5 +1,6 @@
 import { Controller, Get, Query, UseGuards, Logger } from '@nestjs/common';
 import { JwtAuthGuard, CurrentUser, CacheService } from '@app/common';
+import type { UserPayload } from '@app/common';
 import { SearchService } from '@app/search';
 
 @Controller('search')
@@ -14,7 +15,7 @@ export class SearchController {
 
   @Get('transactions')
   async searchTransactions(
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserPayload,
     @Query('q') query?: string,
     @Query('status') status?: string,
     @Query('minAmount') minAmount?: string,

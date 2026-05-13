@@ -2,6 +2,8 @@ import { join } from 'path';
 export * from './guards/jwt-auth.guard.js';
 export * from './decorators/current-user.decorator.js';
 export * from './interfaces/transaction-event.interface.js';
+export * from './interfaces/user-payload.interface.js';
+export * from './interfaces/user-profile.interface.js';
 export * from './strategies/jwt.strategy.js';
 export * from './filters/rpc-exception.filter.js';
 export * from './discovery/discovery.module.js';

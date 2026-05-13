@@ -21,7 +21,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
@@ -62,7 +62,7 @@ export default function RegisterPage() {
               <input
                 {...register('name')}
                 type="text"
-                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm text-black"
                 placeholder="John Doe"
               />
               {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
@@ -72,7 +72,7 @@ export default function RegisterPage() {
               <input
                 {...register('email')}
                 type="email"
-                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm text-black"
                 placeholder="you@example.com"
               />
               {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
@@ -82,7 +82,7 @@ export default function RegisterPage() {
               <input
                 {...register('password')}
                 type="password"
-                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm text-black"
                 placeholder="••••••••"
               />
               {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}

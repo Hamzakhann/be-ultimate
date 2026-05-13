@@ -1,10 +1,11 @@
-import { Controller, Get, Patch, Body } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Query } from '@nestjs/common';
 import { EventPattern, Payload, MessagePattern, Transport } from '@nestjs/microservices';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { QueryBus } from '@nestjs/cqrs';
 import { UsersService } from './users.service.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { CurrentUser } from '@app/common';
+import type { UserPayload } from '@app/common';
 import { GetUserProfileQuery } from './queries/impl/get-user-profile.query.js';
 
 @ApiTags('users')
@@ -30,10 +31,26 @@ export class UsersController {
     @MessagePattern({ cmd: 'get_profile' }, Transport.TCP)
     @Get('me')
     @ApiOperation({ summary: 'Get current user profile' })
-    async getMe(@CurrentUser() user: any, @Payload() data?: any) {
+    async getMe(@CurrentUser() user: UserPayload, @Payload() data?: any) {
         // When called via MessagePattern, user might be in data or user decorator
         const userId = user?.userId || data?.userId;
         return this.queryBus.execute(new GetUserProfileQuery(userId));
+    }
+
+    /**
+     * GET /api/v1/users/search?email=...
+     * Looks up a user's profile strictly by email address for transfer resolution
+     */
+    @MessagePattern({ cmd: 'search_by_email' }, Transport.TCP)
+    @Get('search')
+    @ApiOperation({ summary: 'Lookup user by exact email' })
+    async searchByEmail(@Payload() data?: any, @Query('email') queryEmail?: string) {
+        // Handle TCP payload or HTTP query fallback
+        const email = data?.email || queryEmail;
+        if (!email) {
+            throw new Error('Email parameter is required for lookup.');
+        }
+        return this.usersService.findByEmail(email);
     }
 
     /**
@@ -44,7 +61,7 @@ export class UsersController {
     @Patch('profile')
     @ApiOperation({ summary: 'Update user profile' })
     async updateProfile(
-        @CurrentUser() user: any,
+        @CurrentUser() user: UserPayload,
         @Body() updateProfileDto: UpdateProfileDto,
         @Payload() data?: any,
     ) {

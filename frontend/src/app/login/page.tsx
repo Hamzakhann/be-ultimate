@@ -20,7 +20,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
@@ -61,7 +61,7 @@ export default function LoginPage() {
               <input
                 {...register('email')}
                 type="email"
-                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-black"
                 placeholder="you@example.com"
               />
               {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
@@ -71,7 +71,7 @@ export default function LoginPage() {
               <input
                 {...register('password')}
                 type="password"
-                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-black"
                 placeholder="••••••••"
               />
               {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}

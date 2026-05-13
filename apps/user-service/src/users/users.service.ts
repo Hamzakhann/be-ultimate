@@ -28,9 +28,16 @@ export class UsersService {
             return;
         }
 
+        // Generate intelligent defaults
+        const namePart = data.email.split('@')[0];
+        const firstName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=random&color=fff`;
+
         const profile = this.userProfileRepository.create({
             userId: data.userId,
             email: data.email,
+            firstName,
+            avatarUrl,
         });
 
         await this.userProfileRepository.save(profile);
@@ -44,6 +51,19 @@ export class UsersService {
         return this.userProfileRepository.findOneOrFail({
             where: { userId }
         });
+    }
+
+    /**
+     * Find profile by exact email (for transfers)
+     */
+    async findByEmail(email: string) {
+        const profile = await this.userProfileRepository.findOne({
+            where: { email }
+        });
+        if (!profile) {
+            throw new Error(`Profile with email ${email} not found.`);
+        }
+        return profile;
     }
 
     /**

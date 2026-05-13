@@ -1,0 +1,11 @@
+apps/api-gateway/test/app.e2e-spec.ts(19,12): error TS2349: This expression is not callable.
+  Type '{ default: SuperTestStatic; Test: typeof Test; agent: typeof TestAgent & ((app?: App | undefined, options?: AgentOptions | undefined) => TestAgent<...>); }' has no call signatures.
+apps/audit-service/src/audit-service.controller.spec.ts(19,37): error TS2339: Property 'getHello' does not exist on type 'AuditServiceController'.
+apps/audit-service/test/app.e2e-spec.ts(19,12): error TS2349: This expression is not callable.
+  Type '{ default: SuperTestStatic; Test: typeof Test; agent: typeof TestAgent & ((app?: App | undefined, options?: AgentOptions | undefined) => TestAgent<...>); }' has no call signatures.
+apps/notification-service/src/notification-service.controller.spec.ts(19,44): error TS2339: Property 'getHello' does not exist on type 'NotificationServiceController'.
+apps/notification-service/test/app.e2e-spec.ts(19,12): error TS2349: This expression is not callable.
+  Type '{ default: SuperTestStatic; Test: typeof Test; agent: typeof TestAgent & ((app?: App | undefined, options?: AgentOptions | undefined) => TestAgent<...>); }' has no call signatures.
+test/app.e2e-spec.ts(5,27): error TS2307: Cannot find module './../src/app.module' or its corresponding type declarations.
+test/app.e2e-spec.ts(20,12): error TS2349: This expression is not callable.
+  Type '{ default: SuperTestStatic; Test: typeof Test; agent: typeof TestAgent & ((app?: App | undefined, options?: AgentOptions | undefined) => TestAgent<...>); }' has no call signatures.

@@ -20,7 +20,19 @@ export class UserProfile {
     email!: string;
 
     @Column({ nullable: true })
-    name?: string;
+    firstName?: string;
+
+    @Column({ nullable: true })
+    lastName?: string;
+
+    @Column({ nullable: true })
+    avatarUrl?: string;
+
+    @Column({ nullable: true })
+    phoneNumber?: string;
+
+    @Column({ default: 'USD' })
+    currencyPreference!: string;
 
     @Column({ nullable: true })
     bio?: string;

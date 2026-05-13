@@ -129,9 +129,9 @@ export class SearchService implements OnModuleInit {
     endDate?: string | Date;
     from?: number;
     size?: number;
-  }): Promise<{ hits: any[]; total: number; aggregations?: any }> {
-    const must: any[] = [];
-    const filter: any[] = [];
+  }): Promise<{ hits: Record<string, any>[]; total: number; aggregations?: any }> {
+    const must: Record<string, any>[] = [];
+    const filter: Record<string, any>[] = [];
 
     // 1. Full-Text Fuzzy Search
     if (opts.query) {
@@ -205,6 +205,97 @@ export class SearchService implements OnModuleInit {
       total, 
       aggregations: result.aggregations 
     };
+  }
+
+  /**
+   * Calculate monthly stats and daily volume for the dashboard using ES aggregations.
+   */
+  async getFinancialStats(userId: string): Promise<{ 
+    monthlySpent: number; 
+    monthlyReceived: number; 
+    dailyHistory: { date: string; spent: number; received: number }[] 
+  }> {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const result = await this.esService.search({
+        index: TRANSACTIONS_INDEX,
+        size: 0,
+        query: {
+          bool: {
+            filter: [
+              { term: { status: 'SUCCESS' } },
+              { 
+                bool: {
+                  should: [
+                    { term: { sender_id: userId } },
+                    { term: { receiver_id: userId } }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        aggs: {
+          // Stats for current month
+          monthly: {
+            filter: { range: { timestamp: { gte: startOfMonth } } },
+            aggs: {
+              spent: {
+                filter: { term: { sender_id: userId } },
+                aggs: { total: { sum: { field: 'amount' } } }
+              },
+              received: {
+                filter: { term: { receiver_id: userId } },
+                aggs: { total: { sum: { field: 'amount' } } }
+              }
+            }
+          },
+          // Time series for charts (last 30 days)
+          daily_volume: {
+            date_histogram: {
+              field: 'timestamp',
+              calendar_interval: 'day',
+              format: 'yyyy-MM-dd',
+              extended_bounds: {
+                min: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                max: now.toISOString()
+              }
+            },
+            aggs: {
+              spent: {
+                filter: { term: { sender_id: userId } },
+                aggs: { total: { sum: { field: 'amount' } } }
+              },
+              received: {
+                filter: { term: { receiver_id: userId } },
+                aggs: { total: { sum: { field: 'amount' } } }
+              }
+            }
+          }
+        }
+      });
+
+      const aggs = result.aggregations as any;
+      
+      return {
+        monthlySpent: aggs.monthly?.spent?.total?.value || 0,
+        monthlyReceived: aggs.monthly?.received?.total?.value || 0,
+        dailyHistory: aggs.daily_volume?.buckets.map((b: { key_as_string: string; spent: any; received: any }) => ({
+          date: b.key_as_string,
+          spent: b.spent?.total?.value || 0,
+          received: b.received?.total?.value || 0,
+        })) || [],
+      };
+    } catch (error) {
+      this.logger.warn(`Could not fetch financial stats for user ${userId}: ${error.message}`);
+      return {
+        monthlySpent: 0,
+        monthlyReceived: 0,
+        dailyHistory: [],
+      };
+    }
   }
 
   /**

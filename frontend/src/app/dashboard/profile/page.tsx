@@ -5,11 +5,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { 
-  User, 
-  Mail, 
-  Shield, 
-  Save, 
+import {
+  User,
+  Mail,
+  Shield,
+  Save,
   Loader2,
   Camera,
   MapPin
@@ -18,8 +18,11 @@ import api from '@/lib/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
 const profileSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  firstName: z.string().min(2, 'First name must be at least 2 characters').optional(),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters').optional(),
   email: z.string().email('Invalid email address').optional(), // Usually email is read-only in fintech for security
+  phoneNumber: z.string().optional(),
+  currencyPreference: z.string().length(3).optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -39,8 +42,11 @@ export default function ProfilePage() {
   const { register, handleSubmit, formState: { errors } } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     values: {
-      name: profile?.name || '',
+      firstName: profile?.firstName || '',
+      lastName: profile?.lastName || '',
       email: profile?.email || '',
+      phoneNumber: profile?.phoneNumber || '',
+      currencyPreference: profile?.currencyPreference || 'USD',
     }
   });
 
@@ -89,14 +95,18 @@ export default function ProfilePage() {
           <div className="space-y-6">
             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center">
               <div className="relative inline-block">
-                <div className="h-24 w-24 rounded-full bg-indigo-100 flex items-center justify-center text-3xl font-bold text-indigo-600 border-4 border-white shadow-md">
-                  {profile?.name?.charAt(0)}
+                <div className="h-24 w-24 rounded-full bg-slate-100 flex items-center justify-center text-3xl font-bold text-slate-400 border-4 border-white shadow-md overflow-hidden">
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    profile?.firstName?.charAt(0) || 'U'
+                  )}
                 </div>
                 <button className="absolute bottom-0 right-0 p-2 bg-white border border-slate-200 rounded-full shadow-sm hover:bg-slate-50">
                   <Camera className="h-4 w-4 text-slate-600" />
                 </button>
               </div>
-              <h2 className="mt-4 text-xl font-bold text-slate-900">{profile?.name}</h2>
+              <h2 className="mt-4 text-xl font-bold text-slate-900">{profile?.firstName} {profile?.lastName}</h2>
               <p className="text-sm text-slate-500 flex items-center justify-center mt-1">
                 <Mail className="h-3 w-3 mr-1" /> {profile?.email}
               </p>
@@ -107,7 +117,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="text-center">
                   <p className="text-[10px] uppercase font-bold text-slate-400">KYC</p>
-                  <p className="text-sm font-semibold text-blue-600">Level 1</p>
+                  <p className="text-sm font-semibold text-blue-600">Level 2</p>
                 </div>
               </div>
             </div>
@@ -133,34 +143,76 @@ export default function ProfilePage() {
               </div>
               <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Full Name</label>
+                    <label className="text-sm font-semibold text-slate-700">First Name</label>
                     <div className="relative">
                       <User className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-                      <input 
-                        {...register('name')}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
-                        placeholder="Your Name"
+                      <input
+                        {...register('firstName')}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border text-black border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                        placeholder="First Name"
                       />
                     </div>
-                    {errors.name && <p className="text-xs text-red-600 font-medium">{errors.name.message}</p>}
+                    {errors.firstName && <p className="text-xs text-red-600 font-medium">{errors.firstName.message}</p>}
                   </div>
 
-                  <div className="space-y-2 opacity-60">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">Last Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                      <input
+                        {...register('lastName')}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm text-black"
+                        placeholder="Last Name"
+                      />
+                    </div>
+                    {errors.lastName && <p className="text-xs text-red-600 font-medium">{errors.lastName.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">Phone Number</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                      <input
+                        {...register('phoneNumber')}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm text-black"
+                        placeholder="+1 234 567 8900"
+                      />
+                    </div>
+                    {errors.phoneNumber && <p className="text-xs text-red-600 font-medium">{errors.phoneNumber.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700">Currency Preference</label>
+                    <div className="relative">
+                      <select
+                        {...register('currencyPreference')}
+                        className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm appearance-none"
+                      >
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                      </select>
+                    </div>
+                    {errors.currencyPreference && <p className="text-xs text-red-600 font-medium">{errors.currencyPreference.message}</p>}
+                  </div>
+
+                  <div className="space-y-2 opacity-60 md:col-span-2">
                     <label className="text-sm font-semibold text-slate-700">Email Address (Locked)</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
-                      <input 
+                      <input
                         {...register('email')}
                         disabled
-                        className="w-full pl-10 pr-4 py-3 bg-slate-200 border border-slate-300 rounded-xl outline-none text-sm cursor-not-allowed"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-200 border border-slate-300 rounded-xl outline-none text-sm cursor-not-allowed text-black"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-6 border-t border-slate-100 flex justify-end">
-                  <button 
+                  <button
                     type="submit"
                     disabled={updateMutation.isPending}
                     className="flex items-center space-x-2 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50"

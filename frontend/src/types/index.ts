@@ -11,6 +11,12 @@ export interface Transaction {
   amount: number;
   status: 'PENDING' | 'SUCCESS' | 'FAILED';
   createdAt: string;
+  direction?: 'INBOUND' | 'OUTBOUND';
+  counterparty?: {
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+  };
 }
 
 export interface AuditLog {
@@ -27,4 +33,16 @@ export interface UserStats {
   totalTransactions: number;
   totalVolumeUSD: number;
   lastActivity: string;
+}
+
+export interface DailyVolume {
+  date: string;
+  spent: number;
+  received: number;
+}
+
+export interface WalletStats {
+  monthlySpent: number;
+  monthlyReceived: number;
+  dailyHistory: DailyVolume[];
 }

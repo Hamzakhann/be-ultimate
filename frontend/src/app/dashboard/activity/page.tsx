@@ -21,9 +21,9 @@ export default function ActivityPage() {
   const { data: logs, isLoading, refetch } = useQuery<AuditLog[]>({
     queryKey: ['audit-logs'],
     queryFn: async () => {
-      // In a real app, we'd get the userId from Auth context or /users/me
       const profile = await api.get('/users/me');
-      const response = await api.get(`/audit/logs/${profile.data.id}`);
+      // Use userId instead of profile id to match Audit Service indexing
+      const response = await api.get(`/audit/logs/${profile.data.userId}`);
       return response.data;
     },
   });
